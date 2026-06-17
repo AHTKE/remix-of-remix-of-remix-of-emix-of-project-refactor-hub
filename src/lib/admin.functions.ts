@@ -513,7 +513,7 @@ const ResourceSchema = z.object({
   caption: z.string().optional(),
   size_bytes: z.number().optional(),
   mime: z.string().optional(),
-}).refine((r) => r.kind === "link" ? !!r.url : !!r.file_id, {
+}).refine((r) => !!(r.file_id || r.url), {
   message: "ملف أو رابط مطلوب للمورد",
 });
 
