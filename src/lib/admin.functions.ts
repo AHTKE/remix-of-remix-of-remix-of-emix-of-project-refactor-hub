@@ -2,7 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { deleteCookie, getCookie, getRequest, getRequestHost, setCookie } from "@tanstack/react-start/server";
 import { z } from "zod";
 import { DEFAULT_DATA } from "./types";
-import type { Attempt, BotData, Course, Lesson, LessonResource, Poll, Question, Quiz, Student, Vote, Voucher, VoucherBatch } from "./types";
+import type { Attempt, BotData, Course, Homework, Lesson, LessonResource, Poll, Question, Quiz, Student, Vote, Voucher, VoucherBatch } from "./types";
 
 const ADMIN_COOKIE = "amw_admin_session";
 const TELEGRAM_WEBHOOK_PATH = "/api/public/telegram/webhook";
@@ -378,6 +378,64 @@ export const getDiagnostics = createServerFn({ method: "GET" }).handler(async ()
     bot = { error: e.message };
   }
   return { env, bot, webhook, chat, mediaChat, repo, expectedWebhookUrl: toStableWebhookUrl() };
+});
+
+export const verifyEndToEndFlow = createServerFn({ method: "POST" }).handler(async () => {
+  await requireAdmin();
+  const { getCollectionFresh } = await import("./repo.server");
+  const [students, courses, lessons, homework, quizzes] = await Promise.all([
+    getCollectionFresh<Student>("students"),
+    getCollectionFresh<Course>("courses"),
+    getCollectionFresh<Lesson>("lessons"),
+    getCollectionFresh<Homework>("homework"),
+    getCollectionFresh<Quiz>("quizzes"),
+  ]);
+  const now = Date.now();
+  const student = students.find((s) => !s.banned && (s.subscriptions || []).some((sub) => new Date(sub.expires_at).getTime() > now));
+  const sub = student?.subscriptions.find((x) => new Date(x.expires_at).getTime() > now);
+  const course = sub ? courses.find((c) => c.id === sub.course_id) : null;
+  const courseLessons = course ? lessons.filter((l) => l.course_id === course.id).sort((a, b) => a.order - b.order) : [];
+  const lesson = courseLessons[0] || null;
+  const lessonHomework = lesson ? homework.filter((h) => h.lesson_id === lesson.id) : [];
+  const lessonQuiz = lesson?.quiz_id ? quizzes.find((q) => q.id === lesson.quiz_id) : null;
+
+  const checks = [
+    { key: "subscription", label: "اشتراك نشط لطالب", ok: !!student && !!sub, detail: student ? `${student.student_code} → ${sub?.course_id}` : "لا يوجد طالب باشتراك نشط" },
+    { key: "course", label: "فتح الكورس من الاشتراك", ok: !!course, detail: course?.title || "الكورس المرتبط بالاشتراك غير موجود" },
+    { key: "lessons", label: "عرض حصص الكورس", ok: courseLessons.length > 0, detail: `${courseLessons.length} حصة` },
+    { key: "lesson", label: "تفاصيل أول حصة", ok: !!lesson, detail: lesson ? `${lesson.title} · ${lesson.resources?.length || 0} ملف/رابط` : "لا توجد حصة للاختبار" },
+    { key: "homework", label: "واجبات الحصة", ok: lessonHomework.length > 0, detail: `${lessonHomework.length} واجب` },
+    { key: "quiz", label: "امتحان الحصة", ok: !!lessonQuiz || !!lesson?.quiz_id, detail: lessonQuiz?.title || (lesson?.quiz_id ? "مربوط بامتحان" : "لا يوجد امتحان مرتبط") },
+  ];
+
+  let studentNotification = false;
+  let adminNotifications = 0;
+  try {
+    const { tg } = await import("./telegram.server");
+    if (student) {
+      await tg("sendMessage", {
+        chat_id: student.id,
+        text: `✅ فحص المنصة نجح\nالكورس: ${course?.title || "—"}\nالحصص: ${courseLessons.length}\nالحصة: ${lesson?.title || "—"}`,
+        disable_notification: true,
+      });
+      studentNotification = true;
+    }
+    const { getAdminIds } = await import("./bot-features.server");
+    for (const aid of getAdminIds()) {
+      await tg("sendMessage", {
+        chat_id: aid,
+        text: `🧪 فحص end-to-end\nطالب: ${student?.student_code || "—"}\nكورس: ${course?.title || "—"}\nحصص: ${courseLessons.length}\nواجبات أول حصة: ${lessonHomework.length}`,
+        disable_notification: true,
+      });
+      adminNotifications++;
+    }
+  } catch {}
+
+  checks.push(
+    { key: "student_bot", label: "إشعار الطالب في البوت", ok: studentNotification, detail: studentNotification ? "تم الإرسال" : "تعذر الإرسال أو لا يوجد طالب" },
+    { key: "admin_bot", label: "إشعار الأدمن في البوت", ok: adminNotifications > 0, detail: `${adminNotifications} أدمن` },
+  );
+  return { ok: checks.every((c) => c.ok), checks };
 });
 
 // ============================================================
