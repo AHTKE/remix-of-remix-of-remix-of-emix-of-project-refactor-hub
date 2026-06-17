@@ -1126,7 +1126,6 @@ import type {
   Book,
   BookPurchase,
   BroadcastRecord,
-  Homework,
   HomeworkSubmission,
   SupportMessage,
   SupportTicket,
