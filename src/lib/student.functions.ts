@@ -564,11 +564,20 @@ export const getBotUsername = createServerFn({ method: "GET" }).handler(async ()
 
 export const getMyCourses = createServerFn({ method: "GET" }).handler(async () => {
   const s = await requireStudent();
-  const { getCollection } = await import("./repo.server");
-  const [courses, lessons] = await Promise.all([
+  const { getCollection, getCollectionFresh } = await import("./repo.server");
+  let [courses, lessons] = await Promise.all([
     getCollection<Course>("courses"),
     getCollection<Lesson>("lessons"),
   ]);
+  // Stale per-isolate cache fallback: when student has subscriptions but
+  // courses/lessons aren't visible (recently added via bot/admin in another
+  // worker), force a fresh read from the data channel.
+  if (s.subscriptions.length > 0 && (courses.length === 0 || lessons.length === 0)) {
+    [courses, lessons] = await Promise.all([
+      getCollectionFresh<Course>("courses"),
+      getCollectionFresh<Lesson>("lessons"),
+    ]);
+  }
   const counts: Record<string, number> = {};
   for (const l of lessons) counts[l.course_id] = (counts[l.course_id] || 0) + 1;
   const now = Date.now();
@@ -598,15 +607,25 @@ export const getCourseLessons = createServerFn({ method: "GET" })
     if (!sub || new Date(sub.expires_at).getTime() < Date.now()) {
       throw new Error("الاشتراك غير نشط لهذا الكورس.");
     }
-    const { getCollection } = await import("./repo.server");
-    const [courses, lessons] = await Promise.all([
+    const { getCollection, getCollectionFresh } = await import("./repo.server");
+    let [courses, lessons] = await Promise.all([
       getCollection<Course>("courses"),
       getCollection<Lesson>("lessons"),
     ]);
-    const course = courses.find((c) => c.id === data.courseId);
+    let course = courses.find((c) => c.id === data.courseId);
+    let courseLessons = lessons.filter((l) => l.course_id === data.courseId);
+    // Stale-cache fallback: bot/admin may have added the course or lessons
+    // in another isolate. Re-fetch from source before reporting "empty".
+    if (!course || courseLessons.length === 0) {
+      [courses, lessons] = await Promise.all([
+        getCollectionFresh<Course>("courses"),
+        getCollectionFresh<Lesson>("lessons"),
+      ]);
+      course = courses.find((c) => c.id === data.courseId);
+      courseLessons = lessons.filter((l) => l.course_id === data.courseId);
+    }
     if (!course) throw new Error("الكورس غير موجود.");
-    const items = lessons
-      .filter((l) => l.course_id === data.courseId)
+    const items = courseLessons
       .sort((a, b) => a.order - b.order)
       .map((l) => ({
         id: l.id,
