@@ -270,10 +270,13 @@ export async function setCollection<T = any>(name: string, items: T[]): Promise<
   loc.index.collections[name] = newIds;
   await saveMasterIndex(loc);
   _colCache.set(name, { items: items as any[], at: Date.now() });
+  // Mirror to KV so other isolates / fast reads stay in sync.
+  kvPutJSON(KV_COL(name), items, KV_COL_TTL);
 }
 
 export function invalidateCollection(name: string) {
   _colCache.delete(name);
+  kvDel(KV_COL(name));
 }
 
 export function invalidateAll() {
