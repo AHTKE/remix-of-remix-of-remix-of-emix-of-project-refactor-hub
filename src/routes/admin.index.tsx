@@ -2,7 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
-import { getStats, listCourses, seedDemoData } from "@/lib/admin.functions";
+import { getStats, listCourses, seedDemoData, verifyEndToEndFlow } from "@/lib/admin.functions";
 
 export const Route = createFileRoute("/admin/")({
   component: Overview,
@@ -45,6 +45,26 @@ function SeedButton() {
   );
 }
 
+function VerifyFlowButton() {
+  const verify = useServerFn(verifyEndToEndFlow);
+  const [busy, setBusy] = useState(false);
+  const [checks, setChecks] = useState<Array<{ key: string; label: string; ok: boolean; detail: string }> | null>(null);
+  return (
+    <div className="surface-card p-5 border-primary/30">
+      <div className="flex items-center justify-between gap-4 flex-wrap">
+        <div>
+          <div className="font-semibold">🧪 فحص دورة الاشتراك والحصة</div>
+          <div className="text-xs text-muted-foreground mt-1">يفحص فتح الكورس، ظهور الحصص، تفاصيل الحصة، الواجب، الامتحان، وإشعارات البوت للطالب والأدمن.</div>
+        </div>
+        <button onClick={async () => { setBusy(true); try { const r = await verify(); setChecks(r.checks); } finally { setBusy(false); } }} disabled={busy} className="rounded-xl bg-primary/15 text-primary border border-primary/30 px-4 py-2 text-sm font-semibold disabled:opacity-50">
+          {busy ? "..." : "تشغيل الفحص"}
+        </button>
+      </div>
+      {checks && <div className="mt-3 grid md:grid-cols-2 gap-2 text-xs">{checks.map((c) => <div key={c.key} className={c.ok ? "text-success" : "text-destructive"}>{c.ok ? "✓" : "✗"} {c.label}: <span className="text-muted-foreground">{c.detail}</span></div>)}</div>}
+    </div>
+  );
+}
+
 function Stat({ label, value, hint }: { label: string; value: string | number; hint?: string }) {
   return (
     <div className="surface-card p-5">
@@ -77,6 +97,7 @@ function Overview() {
       </div>
 
       <SeedButton />
+      <VerifyFlowButton />
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <Stat label="الكورسات" value={stats.data?.courses ?? "—"} />

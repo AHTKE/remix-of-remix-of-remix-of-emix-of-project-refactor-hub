@@ -608,18 +608,20 @@ export const getCourseLessons = createServerFn({ method: "GET" })
       throw new Error("الاشتراك غير نشط لهذا الكورس.");
     }
     const { getCollection, getCollectionFresh } = await import("./repo.server");
-    let [courses, lessons] = await Promise.all([
+    let [courses, lessons, homework] = await Promise.all([
       getCollection<Course>("courses"),
       getCollection<Lesson>("lessons"),
+      getCollection<Homework>("homework"),
     ]);
     let course = courses.find((c) => c.id === data.courseId);
     let courseLessons = lessons.filter((l) => l.course_id === data.courseId);
     // Stale-cache fallback: bot/admin may have added the course or lessons
     // in another isolate. Re-fetch from source before reporting "empty".
     if (!course || courseLessons.length === 0) {
-      [courses, lessons] = await Promise.all([
+      [courses, lessons, homework] = await Promise.all([
         getCollectionFresh<Course>("courses"),
         getCollectionFresh<Lesson>("lessons"),
+        getCollectionFresh<Homework>("homework"),
       ]);
       course = courses.find((c) => c.id === data.courseId);
       courseLessons = lessons.filter((l) => l.course_id === data.courseId);
@@ -633,6 +635,7 @@ export const getCourseLessons = createServerFn({ method: "GET" })
         description: l.description,
         resource_count: l.resources?.length || 0,
         has_quiz: !!l.quiz_id,
+        homework_count: homework.filter((h) => h.lesson_id === l.id).length,
       }));
     return { course, lessons: items, expires_at: sub.expires_at };
   });
@@ -641,15 +644,42 @@ export const getLesson = createServerFn({ method: "GET" })
   .inputValidator((d) => z.object({ lessonId: z.string() }).parse(d))
   .handler(async ({ data }) => {
     const s = await requireStudent();
-    const { getCollection } = await import("./repo.server");
-    const lessons = await getCollection<Lesson>("lessons");
-    const lesson = lessons.find((l) => l.id === data.lessonId);
+    const { getCollection, getCollectionFresh } = await import("./repo.server");
+    let lesson = (await getCollection<Lesson>("lessons")).find((l) => l.id === data.lessonId);
+    if (!lesson) {
+      lesson = (await getCollectionFresh<Lesson>("lessons")).find((l) => l.id === data.lessonId);
+    }
     if (!lesson) throw new Error("الحصة غير موجودة.");
     const sub = s.subscriptions.find((x) => x.course_id === lesson.course_id);
     if (!sub || new Date(sub.expires_at).getTime() < Date.now()) {
       throw new Error("الاشتراك غير نشط لهذا الكورس.");
     }
-    return lesson;
+    const [homework, submissions, quizzes] = await Promise.all([
+      getCollection<Homework>("homework"),
+      getCollection<HomeworkSubmission>("homework_submissions"),
+      getCollection<Quiz>("quizzes"),
+    ]);
+    const lessonHomework = homework
+      .filter((h) => h.lesson_id === lesson!.id)
+      .map((h) => {
+        const last = submissions
+          .filter((x) => x.homework_id === h.id && x.student_id === s.id)
+          .sort((a, b) => b.submitted_at.localeCompare(a.submitted_at))[0];
+        return {
+          id: h.id,
+          title: h.title,
+          instructions: h.instructions,
+          due_at: h.due_at,
+          max_score: h.max_score,
+          last_submission: last ? {
+            submitted_at: last.submitted_at,
+            graded_at: last.graded_at,
+            score: last.score,
+            feedback: last.feedback,
+          } : null,
+        };
+      });
+    return { ...lesson, homework: lessonHomework, quiz_title: quizzes.find((q) => q.id === lesson!.quiz_id)?.title || null };
   });
 
 // ============================================================
@@ -711,6 +741,20 @@ export const redeemVoucher = createServerFn({ method: "POST" })
     await upsert<Student>("students", s);
     const courses = await getCollection<Course>("courses");
     const c = courses.find((x) => x.id === v.course_id);
+    try {
+      const { tg } = await import("./telegram.server");
+      const { getAdminIds } = await import("./bot-features.server");
+      await tg("sendMessage", {
+        chat_id: s.id,
+        text: `✅ تم فتح الكورس على المنصة\n📚 ${c?.title || v.course_id}\n⏰ صالح حتى ${expires.toLocaleDateString("ar-EG")}`,
+      }).catch(() => {});
+      for (const aid of getAdminIds()) {
+        await tg("sendMessage", {
+          chat_id: aid,
+          text: `🎟️ تفعيل اشتراك من المنصة\nالطالب: ${s.student_code}\nالكورس: ${c?.title || v.course_id}\nالكود: ${v.code}`,
+        }).catch(() => {});
+      }
+    } catch {}
     return { ok: true, course_id: v.course_id, course_title: c?.title || v.course_id, expires_at: expires.toISOString() };
   });
 
