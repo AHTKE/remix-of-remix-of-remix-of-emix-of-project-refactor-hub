@@ -10,6 +10,8 @@
 // ============================================================
 
 import { getOverrideSync } from "./telegram.server";
+
+export interface KVNamespaceLike {
   get(key: string, type?: "text" | "json"): Promise<any>;
   put(key: string, value: string, opts?: { expirationTtl?: number }): Promise<void>;
   delete(key: string): Promise<void>;
