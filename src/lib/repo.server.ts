@@ -18,7 +18,9 @@ const SCHEMA_VERSION = 1;
 const INDEX_HEADER = "LMS_INDEX_V1\n";
 const COL_PREFIX = "LMS_COL:";
 const MAX_CHUNK_CHARS = 3500; // leave room for header + Telegram 4096 cap
-const CACHE_TTL_MS = 5 * 60_000; // 5min — invalidated explicitly on writes
+// Short TTL so reads after cross-isolate writes (bot worker → web worker)
+// don't show stale data for several minutes. Writes still invalidate explicitly.
+const CACHE_TTL_MS = 15_000;
 // Per-chunk cache by Telegram message_id. Each chunk is read once per worker
 // lifetime (Telegram fwd+delete is expensive) and reused until a write
 // updates the chunk and we invalidate by id.
