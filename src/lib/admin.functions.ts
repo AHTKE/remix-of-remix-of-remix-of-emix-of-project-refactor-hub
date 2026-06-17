@@ -1064,6 +1064,7 @@ const SECRET_KEYS = [
   "ADMIN_PASSWORD",
   "SESSION_SECRET",
   "ADMIN_TELEGRAM_IDS",
+  "KV_NAMESPACE_ID",
 ] as const;
 type SecretKey = (typeof SECRET_KEYS)[number];
 
