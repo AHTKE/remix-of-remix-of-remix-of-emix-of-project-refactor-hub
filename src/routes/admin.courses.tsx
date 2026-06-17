@@ -176,6 +176,29 @@ function LessonsPanel({ courseId }: { courseId: string }) {
   const [quizId, setQuizId] = useState("");
   const [uploading, setUploading] = useState(false);
   const [linkDrafts, setLinkDrafts] = useState<Record<string, { url: string; title: string }>>({});
+  const [videoDrafts, setVideoDrafts] = useState<Record<string, { value: string; title: string }>>({});
+
+  async function addVideoResource(lesson: any) {
+    const draft = videoDrafts[lesson.id] || { value: "", title: "" };
+    const raw = draft.value.trim();
+    if (!raw) return alert("ضع Telegram file_id أو رابط فيديو");
+    const isUrl = /^https?:\/\//i.test(raw);
+    const resource: any = {
+      id: "r_" + Date.now().toString(36),
+      kind: "video",
+      file_name: draft.title.trim() || "فيديو الحصة",
+    };
+    if (isUrl) {
+      resource.url = raw;
+      resource.provider = "external";
+    } else {
+      // Telegram file_id — served via /api/public/media proxy
+      resource.file_id = raw;
+    }
+    await save({ data: { ...lesson, resources: [...lesson.resources, resource] } as any });
+    setVideoDrafts({ ...videoDrafts, [lesson.id]: { value: "", title: "" } });
+    qc.invalidateQueries({ queryKey: ["lessons", courseId] });
+  }
 
   async function add() {
     if (!title.trim()) return;
@@ -322,6 +345,24 @@ function LessonsPanel({ courseId }: { courseId: string }) {
               />
               <button onClick={() => addLinkResource(l)} className="rounded-md bg-primary/15 text-primary px-3 py-1 text-xs font-semibold">
                 + رابط
+              </button>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-[1fr_1fr_auto] gap-1.5">
+              <input
+                value={videoDrafts[l.id]?.value || ""}
+                onChange={(e) => setVideoDrafts({ ...videoDrafts, [l.id]: { ...(videoDrafts[l.id] || { title: "" }), value: e.target.value } })}
+                placeholder="🎬 Telegram file_id أو رابط فيديو (للحلقات الكبيرة)"
+                className="rounded-md bg-input border border-border px-2 py-1 text-xs font-mono"
+                dir="ltr"
+              />
+              <input
+                value={videoDrafts[l.id]?.title || ""}
+                onChange={(e) => setVideoDrafts({ ...videoDrafts, [l.id]: { ...(videoDrafts[l.id] || { value: "" }), title: e.target.value } })}
+                placeholder="عنوان الفيديو (اختياري)"
+                className="rounded-md bg-input border border-border px-2 py-1 text-xs"
+              />
+              <button onClick={() => addVideoResource(l)} className="rounded-md bg-primary/15 text-primary px-3 py-1 text-xs font-semibold">
+                + فيديو
               </button>
             </div>
           </div>

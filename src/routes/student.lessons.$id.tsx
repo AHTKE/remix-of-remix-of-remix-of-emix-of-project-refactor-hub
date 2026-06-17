@@ -60,12 +60,38 @@ function LessonView() {
                       </a>
                     </div>
                   ) : r.kind === "video" ? (
-                    <video
-                      src={`/api/public/media/${r.file_id}`}
-                      controls
-                      preload="metadata"
-                      className="w-full rounded-xl bg-black aspect-video"
-                    />
+                    r.url && !r.file_id ? (
+                      googleDrivePreview(r.url) ? (
+                        <iframe
+                          src={googleDrivePreview(r.url)!}
+                          title={r.file_name || "فيديو الحصة"}
+                          allow="autoplay; fullscreen"
+                          allowFullScreen
+                          className="w-full rounded-xl bg-black aspect-video border border-border"
+                          onContextMenu={(e) => e.preventDefault()}
+                        />
+                      ) : (
+                        <video
+                          src={r.url}
+                          controls
+                          controlsList="nodownload noplaybackrate noremoteplayback"
+                          disablePictureInPicture
+                          onContextMenu={(e) => e.preventDefault()}
+                          preload="metadata"
+                          className="w-full rounded-xl bg-black aspect-video"
+                        />
+                      )
+                    ) : (
+                      <video
+                        src={`/api/public/media/${r.file_id}`}
+                        controls
+                        controlsList="nodownload noplaybackrate noremoteplayback"
+                        disablePictureInPicture
+                        onContextMenu={(e) => e.preventDefault()}
+                        preload="metadata"
+                        className="w-full rounded-xl bg-black aspect-video"
+                      />
+                    )
                   ) : r.kind === "photo" ? (
                     <img src={`/api/public/media/${r.file_id}`} alt={r.file_name || ""} className="w-full rounded-xl" />
                   ) : r.kind === "audio" ? (
