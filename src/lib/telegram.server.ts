@@ -363,20 +363,37 @@ export function hasAuthBotConfigured(): boolean {
 
 /** Send a message via the auth bot if configured, else via the main bot. */
 export async function sendAuthMessage(chatId: string | number, text: string, extra: Record<string, any> = {}) {
-  if (Date.now() - _overrideAt > OVERRIDE_TTL) {
-    try { await loadOverrides(); } catch {}
+  try {
+    // Always refresh overrides so the auth bot picks up new tokens from KV instantly.
+    await loadOverrides();
+  } catch (e) {
+    console.error("[auth-bot] loadOverrides failed", e);
   }
-  const token = authBotToken();
-  if (!token) {
-    return tg("sendMessage", { chat_id: chatId, text, ...extra });
+  const authToken = authBotToken();
+  if (!authToken) {
+    console.warn("[auth-bot] TELEGRAM_AUTH_BOT_TOKEN not set — falling back to main bot");
+    try {
+      return await tg("sendMessage", { chat_id: chatId, text, ...extra });
+    } catch (e: any) {
+      console.error(`[auth-bot] main-bot fallback sendMessage failed chat=${chatId}:`, e?.message || e);
+      throw e;
+    }
   }
-  const res = await fetch(`${API}${token}/sendMessage`, {
-    method: "POST",
-    headers: { "content-type": "application/json" },
-    body: JSON.stringify({ chat_id: chatId, text, ...extra }),
-  });
-  const json = await res.json().catch(() => ({ ok: false, description: String(res.status) }));
-  if (!json.ok) throw new Error(`Auth bot sendMessage failed: ${json.description}`);
-  return json.result;
+  try {
+    const res = await fetch(`${API}${authToken}/sendMessage`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ chat_id: chatId, text, ...extra }),
+    });
+    const json = await res.json().catch(() => ({ ok: false, description: `HTTP ${res.status}` }));
+    if (!json.ok) {
+      console.error(`[auth-bot] sendMessage failed status=${res.status} chat=${chatId} desc=${json.description}`);
+      throw new Error(`Auth bot sendMessage failed: ${json.description}`);
+    }
+    return json.result;
+  } catch (e: any) {
+    console.error(`[auth-bot] network/transport error chat=${chatId}:`, e?.message || e);
+    throw e;
+  }
 }
 
