@@ -53,8 +53,10 @@ export type Course = {
 /** Resource attached to a lesson */
 export type LessonResource = {
   id: string;
-  kind: "video" | "document" | "photo" | "audio";
-  file_id: string;            // Telegram file_id from MEDIA channel
+  kind: "video" | "document" | "photo" | "audio" | "link";
+  file_id?: string;           // Telegram file_id from MEDIA channel
+  url?: string;               // External lesson link, e.g. Google Drive video
+  provider?: "google_drive" | "external";
   file_name?: string;
   caption?: string;
   size_bytes?: number;
