@@ -9,7 +9,7 @@
 //   3) In-memory Map fallback (Lovable preview / local dev).
 // ============================================================
 
-export interface KVNamespaceLike {
+import { getOverrideSync } from "./telegram.server";
   get(key: string, type?: "text" | "json"): Promise<any>;
   put(key: string, value: string, opts?: { expirationTtl?: number }): Promise<void>;
   delete(key: string): Promise<void>;
