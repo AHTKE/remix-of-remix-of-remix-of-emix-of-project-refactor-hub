@@ -370,6 +370,10 @@ async function sendLessonResource(chatId: number, lessonId: string, resourceId: 
   const r = lesson.resources.find((x) => x.id === resourceId);
   if (!r) return;
   if (r.kind === "link") {
+    if (!r.url) {
+      await tg("sendMessage", { chat_id: chatId, text: "⚠️ الرابط غير متاح حالياً." });
+      return;
+    }
     await tg("sendMessage", {
       chat_id: chatId,
       text: `🔗 ${esc(r.file_name || "رابط الحصة")}${r.caption ? `\n${esc(r.caption)}` : ""}`,
