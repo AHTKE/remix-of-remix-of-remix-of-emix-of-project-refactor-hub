@@ -176,6 +176,29 @@ function LessonsPanel({ courseId }: { courseId: string }) {
   const [quizId, setQuizId] = useState("");
   const [uploading, setUploading] = useState(false);
   const [linkDrafts, setLinkDrafts] = useState<Record<string, { url: string; title: string }>>({});
+  const [videoDrafts, setVideoDrafts] = useState<Record<string, { value: string; title: string }>>({});
+
+  async function addVideoResource(lesson: any) {
+    const draft = videoDrafts[lesson.id] || { value: "", title: "" };
+    const raw = draft.value.trim();
+    if (!raw) return alert("ضع Telegram file_id أو رابط فيديو");
+    const isUrl = /^https?:\/\//i.test(raw);
+    const resource: any = {
+      id: "r_" + Date.now().toString(36),
+      kind: "video",
+      file_name: draft.title.trim() || "فيديو الحصة",
+    };
+    if (isUrl) {
+      resource.url = raw;
+      resource.provider = "external";
+    } else {
+      // Telegram file_id — served via /api/public/media proxy
+      resource.file_id = raw;
+    }
+    await save({ data: { ...lesson, resources: [...lesson.resources, resource] } as any });
+    setVideoDrafts({ ...videoDrafts, [lesson.id]: { value: "", title: "" } });
+    qc.invalidateQueries({ queryKey: ["lessons", courseId] });
+  }
 
   async function add() {
     if (!title.trim()) return;
