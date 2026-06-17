@@ -213,6 +213,7 @@ export async function getCollection<T = any>(name: string): Promise<T[]> {
 
 export async function getCollectionFresh<T = any>(name: string): Promise<T[]> {
   _colCache.delete(name);
+  kvDel(KV_COL(name));
   const loc = await loadMasterIndex(true);
   const ids = loc.index.collections[name] || [];
   const chunks = await Promise.all(
@@ -225,6 +226,7 @@ export async function getCollectionFresh<T = any>(name: string): Promise<T[]> {
   const items: T[] = [];
   for (const arr of chunks) items.push(...(arr as T[]));
   _colCache.set(name, { items: items as any[], at: Date.now() });
+  kvPutJSON(KV_COL(name), items, KV_COL_TTL);
   return items;
 }
 
