@@ -62,10 +62,6 @@ function readCfCreds(): CfCreds | null {
   let namespaceId = "";
   let token = "";
   try {
-    // Lazy require to avoid circular imports during early bootstrap.
-    // telegram.server keeps a sync cache populated by save/load of runtime overrides.
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
-    const { getOverrideSync } = require("./telegram.server") as typeof import("./telegram.server");
     accountId = getOverrideSync("CLOUDFLARE_ACCOUNT_ID");
     namespaceId = getOverrideSync("CLOUDFLARE_KV_NAMESPACE_ID");
     token = getOverrideSync("CLOUDFLARE_API_TOKEN");
