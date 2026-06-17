@@ -13,6 +13,10 @@
 // ============================================================
 
 import { tg, dataChannelId } from "./telegram.server";
+import { kvGetJSON, kvPutJSON, kvDel, kvHasRealBinding } from "./kv.server";
+
+const KV_COL = (name: string) => `col:${name}`;
+const KV_COL_TTL = 24 * 60 * 60; // 24h — Telegram remains source of truth
 
 const SCHEMA_VERSION = 1;
 const INDEX_HEADER = "LMS_INDEX_V1\n";
@@ -178,10 +182,18 @@ export async function getCollection<T = any>(name: string): Promise<T[]> {
   const cached = _colCache.get(name);
   if (cached && Date.now() - cached.at < CACHE_TTL_MS) return cached.items as T[];
 
+  // 1) Fast path: Cloudflare KV (<15ms when binding is real).
+  if (kvHasRealBinding()) {
+    const kvHit = await kvGetJSON<T[]>(KV_COL(name));
+    if (Array.isArray(kvHit)) {
+      _colCache.set(name, { items: kvHit as any[], at: Date.now() });
+      return kvHit;
+    }
+  }
+
+  // 2) Source of truth: Telegram channel chunks.
   const loc = await loadMasterIndex();
   const ids = loc.index.collections[name] || [];
-  // Parallel chunk reads with per-chunk cache so we avoid a Telegram
-  // fwd+delete round-trip whenever the chunk content is already cached.
   const chunks = await Promise.all(
     ids.map(async (id) => {
       const c = _chunkCache.get(id);
@@ -194,11 +206,14 @@ export async function getCollection<T = any>(name: string): Promise<T[]> {
   const items: T[] = [];
   for (const arr of chunks) items.push(...(arr as T[]));
   _colCache.set(name, { items: items as any[], at: Date.now() });
+  // 3) Warm the KV cache for next read.
+  kvPutJSON(KV_COL(name), items, KV_COL_TTL);
   return items;
 }
 
 export async function getCollectionFresh<T = any>(name: string): Promise<T[]> {
   _colCache.delete(name);
+  kvDel(KV_COL(name));
   const loc = await loadMasterIndex(true);
   const ids = loc.index.collections[name] || [];
   const chunks = await Promise.all(
@@ -211,6 +226,7 @@ export async function getCollectionFresh<T = any>(name: string): Promise<T[]> {
   const items: T[] = [];
   for (const arr of chunks) items.push(...(arr as T[]));
   _colCache.set(name, { items: items as any[], at: Date.now() });
+  kvPutJSON(KV_COL(name), items, KV_COL_TTL);
   return items;
 }
 
@@ -256,10 +272,13 @@ export async function setCollection<T = any>(name: string, items: T[]): Promise<
   loc.index.collections[name] = newIds;
   await saveMasterIndex(loc);
   _colCache.set(name, { items: items as any[], at: Date.now() });
+  // Mirror to KV so other isolates / fast reads stay in sync.
+  kvPutJSON(KV_COL(name), items, KV_COL_TTL);
 }
 
 export function invalidateCollection(name: string) {
   _colCache.delete(name);
+  kvDel(KV_COL(name));
 }
 
 export function invalidateAll() {
