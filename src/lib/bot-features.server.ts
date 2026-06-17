@@ -760,6 +760,15 @@ export async function handleAdminCommand(chatId: number, fromId: number, text: s
       created_at: new Date().toISOString(),
     };
     await upsert<Homework>("homework", hw);
+    const courseStudents = (await getCollection<Student>("students")).filter((s) =>
+      (s.subscriptions || []).some((sub) => sub.course_id === lesson.course_id && new Date(sub.expires_at).getTime() > Date.now()),
+    );
+    for (const s of courseStudents) {
+      await tg("sendMessage", {
+        chat_id: s.id,
+        text: `📝 واجب جديد\n${esc(title)}\nالحصة: ${esc(lesson.title)}`,
+      }).catch(() => {});
+    }
     await tg("sendMessage", { chat_id: chatId, text: `✅ تم إنشاء الواجب: <code>${hw.id}</code>`, parse_mode: "HTML" });
     return true;
   }
