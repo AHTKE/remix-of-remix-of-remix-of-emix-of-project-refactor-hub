@@ -258,7 +258,7 @@ function phoneKeyboard(student: Student) {
 }
 
 function resourceButtonText(kind: string, name?: string) {
-  const label = kind === "video" ? "📺 مشاهدة الفيديو" : kind === "document" ? "📘 فتح الملف" : kind === "photo" ? "🖼️ فتح الصورة" : "🎧 تشغيل الصوت";
+  const label = kind === "video" ? "📺 مشاهدة الفيديو" : kind === "document" ? "📘 فتح الملف" : kind === "photo" ? "🖼️ فتح الصورة" : kind === "audio" ? "🎧 تشغيل الصوت" : "🔗 فتح الرابط";
   return name ? `${label} — ${name.slice(0, 28)}` : label;
 }
 
@@ -369,6 +369,15 @@ async function sendLessonResource(chatId: number, lessonId: string, resourceId: 
   }
   const r = lesson.resources.find((x) => x.id === resourceId);
   if (!r) return;
+  if (r.kind === "link") {
+    await tg("sendMessage", {
+      chat_id: chatId,
+      text: `🔗 ${esc(r.file_name || "رابط الحصة")}${r.caption ? `\n${esc(r.caption)}` : ""}`,
+      parse_mode: "HTML",
+      reply_markup: { inline_keyboard: [[{ text: "فتح الرابط", url: r.url }]] },
+    });
+    return;
+  }
   const method = r.kind === "video" ? "sendVideo" : r.kind === "photo" ? "sendPhoto" : r.kind === "audio" ? "sendAudio" : "sendDocument";
   const key = r.kind === "document" ? "document" : r.kind;
   await sendProtected(method, {

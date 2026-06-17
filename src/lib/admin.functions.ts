@@ -447,12 +447,16 @@ export const deleteCourse = createServerFn({ method: "POST" })
 
 const ResourceSchema = z.object({
   id: z.string(),
-  kind: z.enum(["video", "document", "photo", "audio"]),
-  file_id: z.string(),
+  kind: z.enum(["video", "document", "photo", "audio", "link"]),
+  file_id: z.string().optional(),
+  url: z.string().url().optional(),
+  provider: z.enum(["google_drive", "external"]).optional(),
   file_name: z.string().optional(),
   caption: z.string().optional(),
   size_bytes: z.number().optional(),
   mime: z.string().optional(),
+}).refine((r) => r.kind === "link" ? !!r.url : !!r.file_id, {
+  message: "ملف أو رابط مطلوب للمورد",
 });
 
 const LessonSchema = z.object({
