@@ -1,0 +1,86 @@
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { useQuery } from "@tanstack/react-query";
+import { getLesson } from "@/lib/student.functions";
+
+export const Route = createFileRoute("/student/lessons/$id")({
+  component: LessonView,
+});
+
+function LessonView() {
+  const { id } = Route.useParams();
+  const q = useQuery({ queryKey: ["lesson", id], queryFn: () => getLesson({ data: { lessonId: id } }) });
+
+  return (
+    <div className="max-w-4xl mx-auto px-5 md:px-8 py-6 md:py-10 space-y-5">
+      {q.data && (
+        <Link to="/student/courses/$id" params={{ id: q.data.course_id }} className="text-sm text-primary hover:underline">
+          → رجوع للحصص
+        </Link>
+      )}
+
+      {q.isLoading ? (
+        <div className="surface-card h-64 animate-pulse" />
+      ) : q.error ? (
+        <div className="surface-card p-6 text-destructive">{(q.error as Error).message}</div>
+      ) : q.data && (
+        <>
+          <header>
+            <h1 className="text-2xl md:text-3xl font-bold">{q.data.title}</h1>
+            {q.data.description && <p className="text-muted-foreground mt-2">{q.data.description}</p>}
+          </header>
+
+          {!q.data.resources?.length ? (
+            <div className="surface-card p-8 text-center text-muted-foreground">لا توجد ملفات.</div>
+          ) : (
+            <div className="space-y-4">
+              {q.data.resources.map((r) => (
+                <article key={r.id} className="surface-card p-4 md:p-5">
+                  <div className="flex items-center gap-2 text-sm font-semibold mb-3">
+                    <span>{iconFor(r.kind)}</span>
+                    <span>{r.file_name || r.kind}</span>
+                  </div>
+                  {r.kind === "video" ? (
+                    <video
+                      src={`/api/public/media/${r.file_id}`}
+                      controls
+                      preload="metadata"
+                      className="w-full rounded-xl bg-black aspect-video"
+                    />
+                  ) : r.kind === "photo" ? (
+                    <img src={`/api/public/media/${r.file_id}`} alt={r.file_name || ""} className="w-full rounded-xl" />
+                  ) : r.kind === "audio" ? (
+                    <audio src={`/api/public/media/${r.file_id}`} controls className="w-full" />
+                  ) : (
+                    <a
+                      href={`/api/public/media/${r.file_id}`}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="inline-flex items-center gap-2 rounded-xl brand-gradient text-primary-foreground px-4 py-2 text-sm font-semibold"
+                    >
+                      📥 تحميل / فتح
+                    </a>
+                  )}
+                  {r.caption && <p className="text-sm text-muted-foreground mt-3">{r.caption}</p>}
+                </article>
+              ))}
+            </div>
+          )}
+
+          {q.data.quiz_id && (
+            <Link
+              to="/student/quizzes/$id"
+              params={{ id: q.data.quiz_id }}
+              className="block surface-card p-5 hover:border-primary/40 transition text-center"
+            >
+              🧪 <span className="font-bold">امتحان الحصة</span> — ابدأ الآن ←
+            </Link>
+          )}
+        </>
+      )}
+    </div>
+  );
+}
+
+function iconFor(kind: string) {
+  return kind === "video" ? "🎬" : kind === "photo" ? "🖼️" : kind === "audio" ? "🎵" : "📄";
+}

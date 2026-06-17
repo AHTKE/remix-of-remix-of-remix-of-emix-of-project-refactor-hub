@@ -9,38 +9,513 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as StudentRouteImport } from './routes/student'
+import { Route as LoginRouteImport } from './routes/login'
+import { Route as CoursesRouteImport } from './routes/courses'
+import { Route as AuthRouteImport } from './routes/auth'
+import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as StudentIndexRouteImport } from './routes/student.index'
+import { Route as AdminIndexRouteImport } from './routes/admin.index'
+import { Route as StudentWalletRouteImport } from './routes/student.wallet'
+import { Route as StudentSupportRouteImport } from './routes/student.support'
+import { Route as StudentQuizzesRouteImport } from './routes/student.quizzes'
+import { Route as StudentProfileRouteImport } from './routes/student.profile'
+import { Route as StudentNotificationsRouteImport } from './routes/student.notifications'
+import { Route as StudentHomeworkRouteImport } from './routes/student.homework'
+import { Route as StudentCoursesRouteImport } from './routes/student.courses'
+import { Route as StudentBlockedRouteImport } from './routes/student.blocked'
+import { Route as StudentActivityRouteImport } from './routes/student.activity'
+import { Route as AdminWalletRouteImport } from './routes/admin.wallet'
+import { Route as AdminVouchersRouteImport } from './routes/admin.vouchers'
+import { Route as AdminSupportRouteImport } from './routes/admin.support'
+import { Route as AdminStudentsRouteImport } from './routes/admin.students'
+import { Route as AdminSettingsRouteImport } from './routes/admin.settings'
+import { Route as AdminQuizzesRouteImport } from './routes/admin.quizzes'
+import { Route as AdminPollsRouteImport } from './routes/admin.polls'
+import { Route as AdminNewRouteImport } from './routes/admin.new'
+import { Route as AdminHomeworkRouteImport } from './routes/admin.homework'
+import { Route as AdminFaqRouteImport } from './routes/admin.faq'
+import { Route as AdminCoursesRouteImport } from './routes/admin.courses'
+import { Route as AdminBroadcastRouteImport } from './routes/admin.broadcast'
+import { Route as AdminBooksRouteImport } from './routes/admin.books'
+import { Route as AdminAnalyticsRouteImport } from './routes/admin.analytics'
+import { Route as StudentQuizzesIdRouteImport } from './routes/student.quizzes.$id'
+import { Route as StudentLessonsIdRouteImport } from './routes/student.lessons.$id'
+import { Route as StudentCoursesIdRouteImport } from './routes/student.courses.$id'
+import { Route as AdminQIdRouteImport } from './routes/admin.q.$id'
+import { Route as ApiPublicTelegramWebhookRouteImport } from './routes/api/public/telegram/webhook'
+import { Route as ApiPublicMediaFileIdRouteImport } from './routes/api/public/media/$fileId'
 
+const StudentRoute = StudentRouteImport.update({
+  id: '/student',
+  path: '/student',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LoginRoute = LoginRouteImport.update({
+  id: '/login',
+  path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CoursesRoute = CoursesRouteImport.update({
+  id: '/courses',
+  path: '/courses',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthRoute = AuthRouteImport.update({
+  id: '/auth',
+  path: '/auth',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminRoute = AdminRouteImport.update({
+  id: '/admin',
+  path: '/admin',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const StudentIndexRoute = StudentIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => StudentRoute,
+} as any)
+const AdminIndexRoute = AdminIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AdminRoute,
+} as any)
+const StudentWalletRoute = StudentWalletRouteImport.update({
+  id: '/wallet',
+  path: '/wallet',
+  getParentRoute: () => StudentRoute,
+} as any)
+const StudentSupportRoute = StudentSupportRouteImport.update({
+  id: '/support',
+  path: '/support',
+  getParentRoute: () => StudentRoute,
+} as any)
+const StudentQuizzesRoute = StudentQuizzesRouteImport.update({
+  id: '/quizzes',
+  path: '/quizzes',
+  getParentRoute: () => StudentRoute,
+} as any)
+const StudentProfileRoute = StudentProfileRouteImport.update({
+  id: '/profile',
+  path: '/profile',
+  getParentRoute: () => StudentRoute,
+} as any)
+const StudentNotificationsRoute = StudentNotificationsRouteImport.update({
+  id: '/notifications',
+  path: '/notifications',
+  getParentRoute: () => StudentRoute,
+} as any)
+const StudentHomeworkRoute = StudentHomeworkRouteImport.update({
+  id: '/homework',
+  path: '/homework',
+  getParentRoute: () => StudentRoute,
+} as any)
+const StudentCoursesRoute = StudentCoursesRouteImport.update({
+  id: '/courses',
+  path: '/courses',
+  getParentRoute: () => StudentRoute,
+} as any)
+const StudentBlockedRoute = StudentBlockedRouteImport.update({
+  id: '/blocked',
+  path: '/blocked',
+  getParentRoute: () => StudentRoute,
+} as any)
+const StudentActivityRoute = StudentActivityRouteImport.update({
+  id: '/activity',
+  path: '/activity',
+  getParentRoute: () => StudentRoute,
+} as any)
+const AdminWalletRoute = AdminWalletRouteImport.update({
+  id: '/wallet',
+  path: '/wallet',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminVouchersRoute = AdminVouchersRouteImport.update({
+  id: '/vouchers',
+  path: '/vouchers',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminSupportRoute = AdminSupportRouteImport.update({
+  id: '/support',
+  path: '/support',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminStudentsRoute = AdminStudentsRouteImport.update({
+  id: '/students',
+  path: '/students',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminSettingsRoute = AdminSettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminQuizzesRoute = AdminQuizzesRouteImport.update({
+  id: '/quizzes',
+  path: '/quizzes',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminPollsRoute = AdminPollsRouteImport.update({
+  id: '/polls',
+  path: '/polls',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminNewRoute = AdminNewRouteImport.update({
+  id: '/new',
+  path: '/new',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminHomeworkRoute = AdminHomeworkRouteImport.update({
+  id: '/homework',
+  path: '/homework',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminFaqRoute = AdminFaqRouteImport.update({
+  id: '/faq',
+  path: '/faq',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminCoursesRoute = AdminCoursesRouteImport.update({
+  id: '/courses',
+  path: '/courses',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminBroadcastRoute = AdminBroadcastRouteImport.update({
+  id: '/broadcast',
+  path: '/broadcast',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminBooksRoute = AdminBooksRouteImport.update({
+  id: '/books',
+  path: '/books',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminAnalyticsRoute = AdminAnalyticsRouteImport.update({
+  id: '/analytics',
+  path: '/analytics',
+  getParentRoute: () => AdminRoute,
+} as any)
+const StudentQuizzesIdRoute = StudentQuizzesIdRouteImport.update({
+  id: '/$id',
+  path: '/$id',
+  getParentRoute: () => StudentQuizzesRoute,
+} as any)
+const StudentLessonsIdRoute = StudentLessonsIdRouteImport.update({
+  id: '/lessons/$id',
+  path: '/lessons/$id',
+  getParentRoute: () => StudentRoute,
+} as any)
+const StudentCoursesIdRoute = StudentCoursesIdRouteImport.update({
+  id: '/$id',
+  path: '/$id',
+  getParentRoute: () => StudentCoursesRoute,
+} as any)
+const AdminQIdRoute = AdminQIdRouteImport.update({
+  id: '/q/$id',
+  path: '/q/$id',
+  getParentRoute: () => AdminRoute,
+} as any)
+const ApiPublicTelegramWebhookRoute =
+  ApiPublicTelegramWebhookRouteImport.update({
+    id: '/api/public/telegram/webhook',
+    path: '/api/public/telegram/webhook',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicMediaFileIdRoute = ApiPublicMediaFileIdRouteImport.update({
+  id: '/api/public/media/$fileId',
+  path: '/api/public/media/$fileId',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/admin': typeof AdminRouteWithChildren
+  '/auth': typeof AuthRoute
+  '/courses': typeof CoursesRoute
+  '/login': typeof LoginRoute
+  '/student': typeof StudentRouteWithChildren
+  '/admin/analytics': typeof AdminAnalyticsRoute
+  '/admin/books': typeof AdminBooksRoute
+  '/admin/broadcast': typeof AdminBroadcastRoute
+  '/admin/courses': typeof AdminCoursesRoute
+  '/admin/faq': typeof AdminFaqRoute
+  '/admin/homework': typeof AdminHomeworkRoute
+  '/admin/new': typeof AdminNewRoute
+  '/admin/polls': typeof AdminPollsRoute
+  '/admin/quizzes': typeof AdminQuizzesRoute
+  '/admin/settings': typeof AdminSettingsRoute
+  '/admin/students': typeof AdminStudentsRoute
+  '/admin/support': typeof AdminSupportRoute
+  '/admin/vouchers': typeof AdminVouchersRoute
+  '/admin/wallet': typeof AdminWalletRoute
+  '/student/activity': typeof StudentActivityRoute
+  '/student/blocked': typeof StudentBlockedRoute
+  '/student/courses': typeof StudentCoursesRouteWithChildren
+  '/student/homework': typeof StudentHomeworkRoute
+  '/student/notifications': typeof StudentNotificationsRoute
+  '/student/profile': typeof StudentProfileRoute
+  '/student/quizzes': typeof StudentQuizzesRouteWithChildren
+  '/student/support': typeof StudentSupportRoute
+  '/student/wallet': typeof StudentWalletRoute
+  '/admin/': typeof AdminIndexRoute
+  '/student/': typeof StudentIndexRoute
+  '/admin/q/$id': typeof AdminQIdRoute
+  '/student/courses/$id': typeof StudentCoursesIdRoute
+  '/student/lessons/$id': typeof StudentLessonsIdRoute
+  '/student/quizzes/$id': typeof StudentQuizzesIdRoute
+  '/api/public/media/$fileId': typeof ApiPublicMediaFileIdRoute
+  '/api/public/telegram/webhook': typeof ApiPublicTelegramWebhookRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/auth': typeof AuthRoute
+  '/courses': typeof CoursesRoute
+  '/login': typeof LoginRoute
+  '/admin/analytics': typeof AdminAnalyticsRoute
+  '/admin/books': typeof AdminBooksRoute
+  '/admin/broadcast': typeof AdminBroadcastRoute
+  '/admin/courses': typeof AdminCoursesRoute
+  '/admin/faq': typeof AdminFaqRoute
+  '/admin/homework': typeof AdminHomeworkRoute
+  '/admin/new': typeof AdminNewRoute
+  '/admin/polls': typeof AdminPollsRoute
+  '/admin/quizzes': typeof AdminQuizzesRoute
+  '/admin/settings': typeof AdminSettingsRoute
+  '/admin/students': typeof AdminStudentsRoute
+  '/admin/support': typeof AdminSupportRoute
+  '/admin/vouchers': typeof AdminVouchersRoute
+  '/admin/wallet': typeof AdminWalletRoute
+  '/student/activity': typeof StudentActivityRoute
+  '/student/blocked': typeof StudentBlockedRoute
+  '/student/courses': typeof StudentCoursesRouteWithChildren
+  '/student/homework': typeof StudentHomeworkRoute
+  '/student/notifications': typeof StudentNotificationsRoute
+  '/student/profile': typeof StudentProfileRoute
+  '/student/quizzes': typeof StudentQuizzesRouteWithChildren
+  '/student/support': typeof StudentSupportRoute
+  '/student/wallet': typeof StudentWalletRoute
+  '/admin': typeof AdminIndexRoute
+  '/student': typeof StudentIndexRoute
+  '/admin/q/$id': typeof AdminQIdRoute
+  '/student/courses/$id': typeof StudentCoursesIdRoute
+  '/student/lessons/$id': typeof StudentLessonsIdRoute
+  '/student/quizzes/$id': typeof StudentQuizzesIdRoute
+  '/api/public/media/$fileId': typeof ApiPublicMediaFileIdRoute
+  '/api/public/telegram/webhook': typeof ApiPublicTelegramWebhookRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/admin': typeof AdminRouteWithChildren
+  '/auth': typeof AuthRoute
+  '/courses': typeof CoursesRoute
+  '/login': typeof LoginRoute
+  '/student': typeof StudentRouteWithChildren
+  '/admin/analytics': typeof AdminAnalyticsRoute
+  '/admin/books': typeof AdminBooksRoute
+  '/admin/broadcast': typeof AdminBroadcastRoute
+  '/admin/courses': typeof AdminCoursesRoute
+  '/admin/faq': typeof AdminFaqRoute
+  '/admin/homework': typeof AdminHomeworkRoute
+  '/admin/new': typeof AdminNewRoute
+  '/admin/polls': typeof AdminPollsRoute
+  '/admin/quizzes': typeof AdminQuizzesRoute
+  '/admin/settings': typeof AdminSettingsRoute
+  '/admin/students': typeof AdminStudentsRoute
+  '/admin/support': typeof AdminSupportRoute
+  '/admin/vouchers': typeof AdminVouchersRoute
+  '/admin/wallet': typeof AdminWalletRoute
+  '/student/activity': typeof StudentActivityRoute
+  '/student/blocked': typeof StudentBlockedRoute
+  '/student/courses': typeof StudentCoursesRouteWithChildren
+  '/student/homework': typeof StudentHomeworkRoute
+  '/student/notifications': typeof StudentNotificationsRoute
+  '/student/profile': typeof StudentProfileRoute
+  '/student/quizzes': typeof StudentQuizzesRouteWithChildren
+  '/student/support': typeof StudentSupportRoute
+  '/student/wallet': typeof StudentWalletRoute
+  '/admin/': typeof AdminIndexRoute
+  '/student/': typeof StudentIndexRoute
+  '/admin/q/$id': typeof AdminQIdRoute
+  '/student/courses/$id': typeof StudentCoursesIdRoute
+  '/student/lessons/$id': typeof StudentLessonsIdRoute
+  '/student/quizzes/$id': typeof StudentQuizzesIdRoute
+  '/api/public/media/$fileId': typeof ApiPublicMediaFileIdRoute
+  '/api/public/telegram/webhook': typeof ApiPublicTelegramWebhookRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths:
+    | '/'
+    | '/admin'
+    | '/auth'
+    | '/courses'
+    | '/login'
+    | '/student'
+    | '/admin/analytics'
+    | '/admin/books'
+    | '/admin/broadcast'
+    | '/admin/courses'
+    | '/admin/faq'
+    | '/admin/homework'
+    | '/admin/new'
+    | '/admin/polls'
+    | '/admin/quizzes'
+    | '/admin/settings'
+    | '/admin/students'
+    | '/admin/support'
+    | '/admin/vouchers'
+    | '/admin/wallet'
+    | '/student/activity'
+    | '/student/blocked'
+    | '/student/courses'
+    | '/student/homework'
+    | '/student/notifications'
+    | '/student/profile'
+    | '/student/quizzes'
+    | '/student/support'
+    | '/student/wallet'
+    | '/admin/'
+    | '/student/'
+    | '/admin/q/$id'
+    | '/student/courses/$id'
+    | '/student/lessons/$id'
+    | '/student/quizzes/$id'
+    | '/api/public/media/$fileId'
+    | '/api/public/telegram/webhook'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to:
+    | '/'
+    | '/auth'
+    | '/courses'
+    | '/login'
+    | '/admin/analytics'
+    | '/admin/books'
+    | '/admin/broadcast'
+    | '/admin/courses'
+    | '/admin/faq'
+    | '/admin/homework'
+    | '/admin/new'
+    | '/admin/polls'
+    | '/admin/quizzes'
+    | '/admin/settings'
+    | '/admin/students'
+    | '/admin/support'
+    | '/admin/vouchers'
+    | '/admin/wallet'
+    | '/student/activity'
+    | '/student/blocked'
+    | '/student/courses'
+    | '/student/homework'
+    | '/student/notifications'
+    | '/student/profile'
+    | '/student/quizzes'
+    | '/student/support'
+    | '/student/wallet'
+    | '/admin'
+    | '/student'
+    | '/admin/q/$id'
+    | '/student/courses/$id'
+    | '/student/lessons/$id'
+    | '/student/quizzes/$id'
+    | '/api/public/media/$fileId'
+    | '/api/public/telegram/webhook'
+  id:
+    | '__root__'
+    | '/'
+    | '/admin'
+    | '/auth'
+    | '/courses'
+    | '/login'
+    | '/student'
+    | '/admin/analytics'
+    | '/admin/books'
+    | '/admin/broadcast'
+    | '/admin/courses'
+    | '/admin/faq'
+    | '/admin/homework'
+    | '/admin/new'
+    | '/admin/polls'
+    | '/admin/quizzes'
+    | '/admin/settings'
+    | '/admin/students'
+    | '/admin/support'
+    | '/admin/vouchers'
+    | '/admin/wallet'
+    | '/student/activity'
+    | '/student/blocked'
+    | '/student/courses'
+    | '/student/homework'
+    | '/student/notifications'
+    | '/student/profile'
+    | '/student/quizzes'
+    | '/student/support'
+    | '/student/wallet'
+    | '/admin/'
+    | '/student/'
+    | '/admin/q/$id'
+    | '/student/courses/$id'
+    | '/student/lessons/$id'
+    | '/student/quizzes/$id'
+    | '/api/public/media/$fileId'
+    | '/api/public/telegram/webhook'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AdminRoute: typeof AdminRouteWithChildren
+  AuthRoute: typeof AuthRoute
+  CoursesRoute: typeof CoursesRoute
+  LoginRoute: typeof LoginRoute
+  StudentRoute: typeof StudentRouteWithChildren
+  ApiPublicMediaFileIdRoute: typeof ApiPublicMediaFileIdRoute
+  ApiPublicTelegramWebhookRoute: typeof ApiPublicTelegramWebhookRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/student': {
+      id: '/student'
+      path: '/student'
+      fullPath: '/student'
+      preLoaderRoute: typeof StudentRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/login': {
+      id: '/login'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/courses': {
+      id: '/courses'
+      path: '/courses'
+      fullPath: '/courses'
+      preLoaderRoute: typeof CoursesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/auth': {
+      id: '/auth'
+      path: '/auth'
+      fullPath: '/auth'
+      preLoaderRoute: typeof AuthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin': {
+      id: '/admin'
+      path: '/admin'
+      fullPath: '/admin'
+      preLoaderRoute: typeof AdminRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -48,11 +523,330 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/student/': {
+      id: '/student/'
+      path: '/'
+      fullPath: '/student/'
+      preLoaderRoute: typeof StudentIndexRouteImport
+      parentRoute: typeof StudentRoute
+    }
+    '/admin/': {
+      id: '/admin/'
+      path: '/'
+      fullPath: '/admin/'
+      preLoaderRoute: typeof AdminIndexRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/student/wallet': {
+      id: '/student/wallet'
+      path: '/wallet'
+      fullPath: '/student/wallet'
+      preLoaderRoute: typeof StudentWalletRouteImport
+      parentRoute: typeof StudentRoute
+    }
+    '/student/support': {
+      id: '/student/support'
+      path: '/support'
+      fullPath: '/student/support'
+      preLoaderRoute: typeof StudentSupportRouteImport
+      parentRoute: typeof StudentRoute
+    }
+    '/student/quizzes': {
+      id: '/student/quizzes'
+      path: '/quizzes'
+      fullPath: '/student/quizzes'
+      preLoaderRoute: typeof StudentQuizzesRouteImport
+      parentRoute: typeof StudentRoute
+    }
+    '/student/profile': {
+      id: '/student/profile'
+      path: '/profile'
+      fullPath: '/student/profile'
+      preLoaderRoute: typeof StudentProfileRouteImport
+      parentRoute: typeof StudentRoute
+    }
+    '/student/notifications': {
+      id: '/student/notifications'
+      path: '/notifications'
+      fullPath: '/student/notifications'
+      preLoaderRoute: typeof StudentNotificationsRouteImport
+      parentRoute: typeof StudentRoute
+    }
+    '/student/homework': {
+      id: '/student/homework'
+      path: '/homework'
+      fullPath: '/student/homework'
+      preLoaderRoute: typeof StudentHomeworkRouteImport
+      parentRoute: typeof StudentRoute
+    }
+    '/student/courses': {
+      id: '/student/courses'
+      path: '/courses'
+      fullPath: '/student/courses'
+      preLoaderRoute: typeof StudentCoursesRouteImport
+      parentRoute: typeof StudentRoute
+    }
+    '/student/blocked': {
+      id: '/student/blocked'
+      path: '/blocked'
+      fullPath: '/student/blocked'
+      preLoaderRoute: typeof StudentBlockedRouteImport
+      parentRoute: typeof StudentRoute
+    }
+    '/student/activity': {
+      id: '/student/activity'
+      path: '/activity'
+      fullPath: '/student/activity'
+      preLoaderRoute: typeof StudentActivityRouteImport
+      parentRoute: typeof StudentRoute
+    }
+    '/admin/wallet': {
+      id: '/admin/wallet'
+      path: '/wallet'
+      fullPath: '/admin/wallet'
+      preLoaderRoute: typeof AdminWalletRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/vouchers': {
+      id: '/admin/vouchers'
+      path: '/vouchers'
+      fullPath: '/admin/vouchers'
+      preLoaderRoute: typeof AdminVouchersRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/support': {
+      id: '/admin/support'
+      path: '/support'
+      fullPath: '/admin/support'
+      preLoaderRoute: typeof AdminSupportRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/students': {
+      id: '/admin/students'
+      path: '/students'
+      fullPath: '/admin/students'
+      preLoaderRoute: typeof AdminStudentsRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/settings': {
+      id: '/admin/settings'
+      path: '/settings'
+      fullPath: '/admin/settings'
+      preLoaderRoute: typeof AdminSettingsRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/quizzes': {
+      id: '/admin/quizzes'
+      path: '/quizzes'
+      fullPath: '/admin/quizzes'
+      preLoaderRoute: typeof AdminQuizzesRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/polls': {
+      id: '/admin/polls'
+      path: '/polls'
+      fullPath: '/admin/polls'
+      preLoaderRoute: typeof AdminPollsRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/new': {
+      id: '/admin/new'
+      path: '/new'
+      fullPath: '/admin/new'
+      preLoaderRoute: typeof AdminNewRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/homework': {
+      id: '/admin/homework'
+      path: '/homework'
+      fullPath: '/admin/homework'
+      preLoaderRoute: typeof AdminHomeworkRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/faq': {
+      id: '/admin/faq'
+      path: '/faq'
+      fullPath: '/admin/faq'
+      preLoaderRoute: typeof AdminFaqRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/courses': {
+      id: '/admin/courses'
+      path: '/courses'
+      fullPath: '/admin/courses'
+      preLoaderRoute: typeof AdminCoursesRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/broadcast': {
+      id: '/admin/broadcast'
+      path: '/broadcast'
+      fullPath: '/admin/broadcast'
+      preLoaderRoute: typeof AdminBroadcastRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/books': {
+      id: '/admin/books'
+      path: '/books'
+      fullPath: '/admin/books'
+      preLoaderRoute: typeof AdminBooksRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/analytics': {
+      id: '/admin/analytics'
+      path: '/analytics'
+      fullPath: '/admin/analytics'
+      preLoaderRoute: typeof AdminAnalyticsRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/student/quizzes/$id': {
+      id: '/student/quizzes/$id'
+      path: '/$id'
+      fullPath: '/student/quizzes/$id'
+      preLoaderRoute: typeof StudentQuizzesIdRouteImport
+      parentRoute: typeof StudentQuizzesRoute
+    }
+    '/student/lessons/$id': {
+      id: '/student/lessons/$id'
+      path: '/lessons/$id'
+      fullPath: '/student/lessons/$id'
+      preLoaderRoute: typeof StudentLessonsIdRouteImport
+      parentRoute: typeof StudentRoute
+    }
+    '/student/courses/$id': {
+      id: '/student/courses/$id'
+      path: '/$id'
+      fullPath: '/student/courses/$id'
+      preLoaderRoute: typeof StudentCoursesIdRouteImport
+      parentRoute: typeof StudentCoursesRoute
+    }
+    '/admin/q/$id': {
+      id: '/admin/q/$id'
+      path: '/q/$id'
+      fullPath: '/admin/q/$id'
+      preLoaderRoute: typeof AdminQIdRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/api/public/telegram/webhook': {
+      id: '/api/public/telegram/webhook'
+      path: '/api/public/telegram/webhook'
+      fullPath: '/api/public/telegram/webhook'
+      preLoaderRoute: typeof ApiPublicTelegramWebhookRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/media/$fileId': {
+      id: '/api/public/media/$fileId'
+      path: '/api/public/media/$fileId'
+      fullPath: '/api/public/media/$fileId'
+      preLoaderRoute: typeof ApiPublicMediaFileIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
+interface AdminRouteChildren {
+  AdminAnalyticsRoute: typeof AdminAnalyticsRoute
+  AdminBooksRoute: typeof AdminBooksRoute
+  AdminBroadcastRoute: typeof AdminBroadcastRoute
+  AdminCoursesRoute: typeof AdminCoursesRoute
+  AdminFaqRoute: typeof AdminFaqRoute
+  AdminHomeworkRoute: typeof AdminHomeworkRoute
+  AdminNewRoute: typeof AdminNewRoute
+  AdminPollsRoute: typeof AdminPollsRoute
+  AdminQuizzesRoute: typeof AdminQuizzesRoute
+  AdminSettingsRoute: typeof AdminSettingsRoute
+  AdminStudentsRoute: typeof AdminStudentsRoute
+  AdminSupportRoute: typeof AdminSupportRoute
+  AdminVouchersRoute: typeof AdminVouchersRoute
+  AdminWalletRoute: typeof AdminWalletRoute
+  AdminIndexRoute: typeof AdminIndexRoute
+  AdminQIdRoute: typeof AdminQIdRoute
+}
+
+const AdminRouteChildren: AdminRouteChildren = {
+  AdminAnalyticsRoute: AdminAnalyticsRoute,
+  AdminBooksRoute: AdminBooksRoute,
+  AdminBroadcastRoute: AdminBroadcastRoute,
+  AdminCoursesRoute: AdminCoursesRoute,
+  AdminFaqRoute: AdminFaqRoute,
+  AdminHomeworkRoute: AdminHomeworkRoute,
+  AdminNewRoute: AdminNewRoute,
+  AdminPollsRoute: AdminPollsRoute,
+  AdminQuizzesRoute: AdminQuizzesRoute,
+  AdminSettingsRoute: AdminSettingsRoute,
+  AdminStudentsRoute: AdminStudentsRoute,
+  AdminSupportRoute: AdminSupportRoute,
+  AdminVouchersRoute: AdminVouchersRoute,
+  AdminWalletRoute: AdminWalletRoute,
+  AdminIndexRoute: AdminIndexRoute,
+  AdminQIdRoute: AdminQIdRoute,
+}
+
+const AdminRouteWithChildren = AdminRoute._addFileChildren(AdminRouteChildren)
+
+interface StudentCoursesRouteChildren {
+  StudentCoursesIdRoute: typeof StudentCoursesIdRoute
+}
+
+const StudentCoursesRouteChildren: StudentCoursesRouteChildren = {
+  StudentCoursesIdRoute: StudentCoursesIdRoute,
+}
+
+const StudentCoursesRouteWithChildren = StudentCoursesRoute._addFileChildren(
+  StudentCoursesRouteChildren,
+)
+
+interface StudentQuizzesRouteChildren {
+  StudentQuizzesIdRoute: typeof StudentQuizzesIdRoute
+}
+
+const StudentQuizzesRouteChildren: StudentQuizzesRouteChildren = {
+  StudentQuizzesIdRoute: StudentQuizzesIdRoute,
+}
+
+const StudentQuizzesRouteWithChildren = StudentQuizzesRoute._addFileChildren(
+  StudentQuizzesRouteChildren,
+)
+
+interface StudentRouteChildren {
+  StudentActivityRoute: typeof StudentActivityRoute
+  StudentBlockedRoute: typeof StudentBlockedRoute
+  StudentCoursesRoute: typeof StudentCoursesRouteWithChildren
+  StudentHomeworkRoute: typeof StudentHomeworkRoute
+  StudentNotificationsRoute: typeof StudentNotificationsRoute
+  StudentProfileRoute: typeof StudentProfileRoute
+  StudentQuizzesRoute: typeof StudentQuizzesRouteWithChildren
+  StudentSupportRoute: typeof StudentSupportRoute
+  StudentWalletRoute: typeof StudentWalletRoute
+  StudentIndexRoute: typeof StudentIndexRoute
+  StudentLessonsIdRoute: typeof StudentLessonsIdRoute
+}
+
+const StudentRouteChildren: StudentRouteChildren = {
+  StudentActivityRoute: StudentActivityRoute,
+  StudentBlockedRoute: StudentBlockedRoute,
+  StudentCoursesRoute: StudentCoursesRouteWithChildren,
+  StudentHomeworkRoute: StudentHomeworkRoute,
+  StudentNotificationsRoute: StudentNotificationsRoute,
+  StudentProfileRoute: StudentProfileRoute,
+  StudentQuizzesRoute: StudentQuizzesRouteWithChildren,
+  StudentSupportRoute: StudentSupportRoute,
+  StudentWalletRoute: StudentWalletRoute,
+  StudentIndexRoute: StudentIndexRoute,
+  StudentLessonsIdRoute: StudentLessonsIdRoute,
+}
+
+const StudentRouteWithChildren =
+  StudentRoute._addFileChildren(StudentRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AdminRoute: AdminRouteWithChildren,
+  AuthRoute: AuthRoute,
+  CoursesRoute: CoursesRoute,
+  LoginRoute: LoginRoute,
+  StudentRoute: StudentRouteWithChildren,
+  ApiPublicMediaFileIdRoute: ApiPublicMediaFileIdRoute,
+  ApiPublicTelegramWebhookRoute: ApiPublicTelegramWebhookRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
