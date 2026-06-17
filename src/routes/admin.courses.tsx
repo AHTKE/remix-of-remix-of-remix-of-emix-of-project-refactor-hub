@@ -175,6 +175,7 @@ function LessonsPanel({ courseId }: { courseId: string }) {
   const [description, setDescription] = useState("");
   const [quizId, setQuizId] = useState("");
   const [uploading, setUploading] = useState(false);
+  const [linkDrafts, setLinkDrafts] = useState<Record<string, { url: string; title: string }>>({});
 
   async function add() {
     if (!title.trim()) return;
@@ -240,6 +241,22 @@ function LessonsPanel({ courseId }: { courseId: string }) {
     await patchLesson(lesson, { resources: lesson.resources.filter((r: any) => r.id !== resourceId) });
   }
 
+  async function addLinkResource(lesson: any) {
+    const draft = linkDrafts[lesson.id] || { url: "", title: "" };
+    const url = draft.url.trim();
+    if (!/^https?:\/\//i.test(url)) return alert("ضع رابط صحيح يبدأ بـ https://");
+    const resource = {
+      id: "r_" + Date.now().toString(36),
+      kind: "link",
+      url,
+      provider: /drive\.google\.com/i.test(url) ? "google_drive" : "external",
+      file_name: draft.title.trim() || (/drive\.google\.com/i.test(url) ? "فيديو Google Drive" : "رابط شرح"),
+    };
+    await save({ data: { ...lesson, resources: [...lesson.resources, resource] } as any });
+    setLinkDrafts({ ...linkDrafts, [lesson.id]: { url: "", title: "" } });
+    qc.invalidateQueries({ queryKey: ["lessons", courseId] });
+  }
+
   return (
     <div className="border-t border-border bg-background/40 p-3 space-y-2">
       {lessons.isLoading ? (
@@ -276,7 +293,7 @@ function LessonsPanel({ courseId }: { courseId: string }) {
             <div className="mt-2 flex flex-wrap gap-1.5">
               {l.resources.map((r) => (
                 <button key={r.id} onClick={() => removeResource(l, r.id)} className="text-[10px] px-2 py-0.5 rounded-full bg-accent/60 hover:bg-destructive/20">
-                  {r.kind === "video" ? "📺" : r.kind === "document" ? "📘" : r.kind === "photo" ? "🖼️" : "🎵"}{" "}
+                  {r.kind === "video" ? "📺" : r.kind === "document" ? "📘" : r.kind === "photo" ? "🖼️" : r.kind === "audio" ? "🎵" : "🔗"}{" "}
                   {r.file_name || r.kind}
                 </button>
               ))}
@@ -289,6 +306,23 @@ function LessonsPanel({ courseId }: { courseId: string }) {
                   disabled={uploading}
                 />
               </label>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-[1fr_1fr_auto] gap-1.5">
+              <input
+                value={linkDrafts[l.id]?.url || ""}
+                onChange={(e) => setLinkDrafts({ ...linkDrafts, [l.id]: { ...(linkDrafts[l.id] || { title: "" }), url: e.target.value } })}
+                placeholder="رابط شرح Google Drive أو أي رابط فيديو"
+                className="rounded-md bg-input border border-border px-2 py-1 text-xs"
+              />
+              <input
+                value={linkDrafts[l.id]?.title || ""}
+                onChange={(e) => setLinkDrafts({ ...linkDrafts, [l.id]: { ...(linkDrafts[l.id] || { url: "" }), title: e.target.value } })}
+                placeholder="اسم الرابط (اختياري)"
+                className="rounded-md bg-input border border-border px-2 py-1 text-xs"
+              />
+              <button onClick={() => addLinkResource(l)} className="rounded-md bg-primary/15 text-primary px-3 py-1 text-xs font-semibold">
+                + رابط
+              </button>
             </div>
           </div>
         ))
