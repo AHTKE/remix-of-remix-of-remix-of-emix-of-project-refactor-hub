@@ -1,11 +1,49 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery } from "@tanstack/react-query";
-import { getStats, listCourses } from "@/lib/admin.functions";
+import { useState } from "react";
+import { getStats, listCourses, seedDemoData } from "@/lib/admin.functions";
 
 export const Route = createFileRoute("/admin/")({
   component: Overview,
 });
+
+function SeedButton() {
+  const seed = useServerFn(seedDemoData);
+  const [busy, setBusy] = useState(false);
+  const [msg, setMsg] = useState<string | null>(null);
+  return (
+    <div className="surface-card p-5 border-warning/40">
+      <div className="flex items-center justify-between gap-4 flex-wrap">
+        <div>
+          <div className="font-semibold">🌱 إنشاء بيانات تجريبية</div>
+          <div className="text-xs text-muted-foreground mt-1">
+            ينشئ كورس + حصة + امتحان + كود تفعيل (DEMO-1234-5678) لتجربة النظام فوراً.
+          </div>
+        </div>
+        <button
+          onClick={async () => {
+            setBusy(true);
+            setMsg(null);
+            try {
+              const r = await seed();
+              setMsg("✅ " + r.message);
+            } catch (e: any) {
+              setMsg("❌ " + e.message);
+            } finally {
+              setBusy(false);
+            }
+          }}
+          disabled={busy}
+          className="rounded-xl bg-warning/20 text-warning border border-warning/40 px-4 py-2 text-sm font-semibold disabled:opacity-50"
+        >
+          {busy ? "..." : "إنشاء"}
+        </button>
+      </div>
+      {msg && <div className="mt-3 text-sm">{msg}</div>}
+    </div>
+  );
+}
 
 function Stat({ label, value, hint }: { label: string; value: string | number; hint?: string }) {
   return (
@@ -37,6 +75,8 @@ function Overview() {
           + كورس جديد
         </Link>
       </div>
+
+      <SeedButton />
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <Stat label="الكورسات" value={stats.data?.courses ?? "—"} />
