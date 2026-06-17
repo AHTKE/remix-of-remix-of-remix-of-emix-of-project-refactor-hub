@@ -39,6 +39,10 @@ async function normalizeCatastrophicSsrResponse(response: Response): Promise<Res
 
 export default {
   async fetch(request: Request, env: unknown, ctx: unknown) {
+    // Expose Cloudflare Worker bindings (e.g. AMW_KV) to the rest of the
+    // app via globalThis so server functions can reach them without
+    // threading `env` through every call site.
+    try { (globalThis as any).__AMW_ENV = env; } catch {}
     try {
       const handler = await getServerEntry();
       const response = await handler.fetch(request, env, ctx);
