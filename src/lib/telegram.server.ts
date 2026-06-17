@@ -338,3 +338,45 @@ export async function fetchTelegramFile(fileId: string): Promise<Response> {
     },
   });
 }
+
+// ============================================================
+// Secondary "Auth & Notifications" bot — used for OTP delivery and
+// transactional alerts. Falls back to the main bot when not configured.
+// ============================================================
+
+function authBotToken() {
+  const t = normalizeSecretValue(
+    _overrideCache.TELEGRAM_AUTH_BOT_TOKEN || process.env.TELEGRAM_AUTH_BOT_TOKEN,
+  ).replace(/^bot/i, "");
+  return t || "";
+}
+
+export function getAuthChatId(): string {
+  return normalizeDigits(
+    normalizeSecretValue(_overrideCache.TELEGRAM_AUTH_CHAT_ID || process.env.TELEGRAM_AUTH_CHAT_ID),
+  );
+}
+
+export function hasAuthBotConfigured(): boolean {
+  return !!authBotToken();
+}
+
+/** Send a message via the auth bot if configured, else via the main bot. */
+export async function sendAuthMessage(chatId: string | number, text: string, extra: Record<string, any> = {}) {
+  if (Date.now() - _overrideAt > OVERRIDE_TTL) {
+    try { await loadOverrides(); } catch {}
+  }
+  const token = authBotToken();
+  if (!token) {
+    return tg("sendMessage", { chat_id: chatId, text, ...extra });
+  }
+  const res = await fetch(`${API}${token}/sendMessage`, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ chat_id: chatId, text, ...extra }),
+  });
+  const json = await res.json().catch(() => ({ ok: false, description: String(res.status) }));
+  if (!json.ok) throw new Error(`Auth bot sendMessage failed: ${json.description}`);
+  return json.result;
+}
+
