@@ -11,14 +11,24 @@ import {
   studentStartPasswordReset,
 } from "@/lib/student.functions";
 import { adminLogin } from "@/lib/admin.functions";
+import { BackButton } from "@/components/BackButton";
+import { ThemeToggle } from "@/components/ThemeToggle";
 
 export const Route = createFileRoute("/login")({
   ssr: false,
+  validateSearch: (s: Record<string, unknown>) => {
+    const t = s.tab;
+    const tab: Tab =
+      t === "signup" || t === "login" || t === "teacher" || t === "support"
+        ? (t as Tab)
+        : "signup";
+    return { tab };
+  },
   head: () => ({ meta: [{ title: "تسجيل دخول — AMW LMS" }] }),
   component: LoginPage,
 });
 
-type Tab = "signup" | "login" | "teacher";
+type Tab = "signup" | "login" | "teacher" | "support";
 type PendingUiStatus = "idle" | "waiting" | "verified" | "expired" | "not_found";
 
 function validateFullArabicName(value: string) {
@@ -35,7 +45,12 @@ function validateFullArabicName(value: string) {
 function LoginPage() {
   const navigate = useNavigate();
   const status = useServerFn(studentStatus);
-  const [tab, setTab] = useState<Tab>("signup");
+  const { tab: initialTab } = Route.useSearch();
+  const [tab, setTab] = useState<Tab>(initialTab);
+
+  useEffect(() => {
+    setTab(initialTab);
+  }, [initialTab]);
 
   useEffect(() => {
     status()
@@ -46,30 +61,59 @@ function LoginPage() {
   }, []);
 
   return (
-    <div dir="rtl" className="min-h-screen flex items-center justify-center px-4 py-10 relative">
+    <div dir="rtl" className="min-h-screen flex flex-col px-4 py-6 relative">
       <div className="absolute inset-0 -z-10 brand-gradient opacity-10 blur-3xl" />
-      <div className="w-full max-w-md surface-card p-6 sm:p-8 space-y-6">
-        <div className="text-center">
-          <div className="text-4xl mb-2">🎓</div>
-          <h1 className="text-2xl font-bold">منصة AMW</h1>
-          <p className="text-sm text-muted-foreground mt-1">سجّل دخولك للمتابعة</p>
-        </div>
+      <div className="flex items-center justify-between mb-4 max-w-md mx-auto w-full">
+        <BackButton fallback="/" />
+        <ThemeToggle />
+      </div>
+      <div className="flex-1 flex items-center justify-center">
+        <div className="w-full max-w-md surface-card p-6 sm:p-8 space-y-6">
+          <div className="text-center">
+            <div className="text-4xl mb-2">
+              {tab === "teacher" ? "👨‍🏫" : tab === "support" ? "🧑‍🔧" : "🎓"}
+            </div>
+            <h1 className="text-2xl font-bold">منصة AMW</h1>
+            <p className="text-sm text-muted-foreground mt-1">سجّل دخولك للمتابعة</p>
+          </div>
 
-        <div className="grid grid-cols-3 gap-2 p-1 rounded-xl bg-secondary/50">
-          <TabButton active={tab === "signup"} onClick={() => setTab("signup")}>
-            🆕 إنشاء حساب
-          </TabButton>
-          <TabButton active={tab === "login"} onClick={() => setTab("login")}>
-            🔐 لدي حساب
-          </TabButton>
-          <TabButton active={tab === "teacher"} onClick={() => setTab("teacher")}>
-            👨‍🏫 معلم
-          </TabButton>
-        </div>
+          <div className="grid grid-cols-4 gap-1.5 p-1 rounded-xl bg-secondary/50 text-[11px] sm:text-xs">
+            <TabButton active={tab === "signup"} onClick={() => setTab("signup")}>
+              🆕 إنشاء
+            </TabButton>
+            <TabButton active={tab === "login"} onClick={() => setTab("login")}>
+              🔐 طالب
+            </TabButton>
+            <TabButton active={tab === "support"} onClick={() => setTab("support")}>
+              🧑‍🔧 دعم
+            </TabButton>
+            <TabButton active={tab === "teacher"} onClick={() => setTab("teacher")}>
+              👨‍🏫 معلم
+            </TabButton>
+          </div>
 
-        {tab === "signup" && <StudentForm />}
-        {tab === "login" && <ExistingStudentForm />}
-        {tab === "teacher" && <TeacherForm />}
+          {tab === "signup" && <StudentForm />}
+          {tab === "login" && <ExistingStudentForm />}
+          {tab === "support" && <SupportPlaceholder />}
+          {tab === "teacher" && <TeacherForm />}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function SupportPlaceholder() {
+  return (
+    <div className="text-center space-y-4 py-4">
+      <div className="text-5xl">🧑‍🔧</div>
+      <h2 className="font-bold text-lg">دخول الدعم الفني</h2>
+      <p className="text-sm text-muted-foreground leading-relaxed">
+        لوحة الدعم الفني قيد الإعداد. هيتم تفعيلها في المرحلة القادمة بحساب
+        اسم + كود يحدّدهم المعلم من لوحة التحكم.
+      </p>
+      <div className="rounded-xl border border-border bg-secondary/40 p-4 text-xs text-right text-muted-foreground">
+        <strong className="text-foreground">المعلم:</strong> يقدر يضيف حسابات الدعم
+        من <code className="text-primary">/admin/support</code> بعد تسجيل دخوله.
       </div>
     </div>
   );
