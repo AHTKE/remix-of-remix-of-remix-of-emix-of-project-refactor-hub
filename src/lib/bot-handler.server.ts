@@ -434,6 +434,15 @@ async function tryRedeem(chatId: number, student: Student, codeRaw: string): Pro
       inline_keyboard: [[{ text: "▶️ ابدأ الكورس", callback_data: `course:${v.course_id}` }]],
     },
   });
+  try {
+    const { getAdminIds } = await import("./bot-features.server");
+    for (const aid of getAdminIds()) {
+      await tg("sendMessage", {
+        chat_id: aid,
+        text: `🎟️ تفعيل اشتراك من البوت\nالطالب: ${student.student_code}\nالكورس: ${course?.title || v.course_id}\nالكود: ${v.code}`,
+      }).catch(() => {});
+    }
+  } catch {}
   return true;
 }
 

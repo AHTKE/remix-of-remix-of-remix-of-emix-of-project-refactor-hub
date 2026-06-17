@@ -608,18 +608,20 @@ export const getCourseLessons = createServerFn({ method: "GET" })
       throw new Error("الاشتراك غير نشط لهذا الكورس.");
     }
     const { getCollection, getCollectionFresh } = await import("./repo.server");
-    let [courses, lessons] = await Promise.all([
+    let [courses, lessons, homework] = await Promise.all([
       getCollection<Course>("courses"),
       getCollection<Lesson>("lessons"),
+      getCollection<Homework>("homework"),
     ]);
     let course = courses.find((c) => c.id === data.courseId);
     let courseLessons = lessons.filter((l) => l.course_id === data.courseId);
     // Stale-cache fallback: bot/admin may have added the course or lessons
     // in another isolate. Re-fetch from source before reporting "empty".
     if (!course || courseLessons.length === 0) {
-      [courses, lessons] = await Promise.all([
+      [courses, lessons, homework] = await Promise.all([
         getCollectionFresh<Course>("courses"),
         getCollectionFresh<Lesson>("lessons"),
+        getCollectionFresh<Homework>("homework"),
       ]);
       course = courses.find((c) => c.id === data.courseId);
       courseLessons = lessons.filter((l) => l.course_id === data.courseId);
@@ -633,6 +635,7 @@ export const getCourseLessons = createServerFn({ method: "GET" })
         description: l.description,
         resource_count: l.resources?.length || 0,
         has_quiz: !!l.quiz_id,
+        homework_count: homework.filter((h) => h.lesson_id === l.id).length,
       }));
     return { course, lessons: items, expires_at: sub.expires_at };
   });

@@ -49,7 +49,7 @@ function CourseDetail() {
                   <div className="flex-1 min-w-0">
                     <div className="font-semibold truncate">{l.title}</div>
                     <div className="text-xs text-muted-foreground mt-0.5">
-                      🎬 {l.resource_count} ملف {l.has_quiz && "• 🧪 امتحان"}
+                      🎬 {l.resource_count} ملف {l.has_quiz && "• 🧪 امتحان"} {l.homework_count ? `• 📝 ${l.homework_count} واجب` : ""}
                     </div>
                   </div>
                   <span className="text-muted-foreground">←</span>
