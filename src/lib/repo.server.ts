@@ -13,6 +13,10 @@
 // ============================================================
 
 import { tg, dataChannelId } from "./telegram.server";
+import { kvGetJSON, kvPutJSON, kvDel, kvHasRealBinding } from "./kv.server";
+
+const KV_COL = (name: string) => `col:${name}`;
+const KV_COL_TTL = 24 * 60 * 60; // 24h — Telegram remains source of truth
 
 const SCHEMA_VERSION = 1;
 const INDEX_HEADER = "LMS_INDEX_V1\n";
