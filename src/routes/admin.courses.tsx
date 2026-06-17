@@ -347,6 +347,24 @@ function LessonsPanel({ courseId }: { courseId: string }) {
                 + رابط
               </button>
             </div>
+            <div className="grid grid-cols-1 sm:grid-cols-[1fr_1fr_auto] gap-1.5">
+              <input
+                value={videoDrafts[l.id]?.value || ""}
+                onChange={(e) => setVideoDrafts({ ...videoDrafts, [l.id]: { ...(videoDrafts[l.id] || { title: "" }), value: e.target.value } })}
+                placeholder="🎬 Telegram file_id أو رابط فيديو (للحلقات الكبيرة)"
+                className="rounded-md bg-input border border-border px-2 py-1 text-xs font-mono"
+                dir="ltr"
+              />
+              <input
+                value={videoDrafts[l.id]?.title || ""}
+                onChange={(e) => setVideoDrafts({ ...videoDrafts, [l.id]: { ...(videoDrafts[l.id] || { value: "" }), title: e.target.value } })}
+                placeholder="عنوان الفيديو (اختياري)"
+                className="rounded-md bg-input border border-border px-2 py-1 text-xs"
+              />
+              <button onClick={() => addVideoResource(l)} className="rounded-md bg-primary/15 text-primary px-3 py-1 text-xs font-semibold">
+                + فيديو
+              </button>
+            </div>
           </div>
         ))
       )}
