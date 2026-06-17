@@ -248,6 +248,16 @@ function Settings() {
                   🔐 Token بصلاحية <code>Workers KV Storage:Edit</code> فقط. يُحفظ مشفّرًا ولا يُعرض مرة أخرى.
                 </p>
               )}
+              {row.key === "TELEGRAM_AUTH_BOT_TOKEN" && (
+                <p className="mt-1 text-[11px] text-success">
+                  🤖 توكن بوت منفصل للتحقق وإرسال OTP والإشعارات. لو فاضي، يستخدم النظام البوت الرئيسي تلقائيًا.
+                </p>
+              )}
+              {row.key === "TELEGRAM_AUTH_CHAT_ID" && (
+                <p className="mt-1 text-[11px] text-success">
+                  📣 المعرف الافتراضي لإشعارات الأدمن من بوت التحقق (اختياري). يقبل ‎@username أو رقم رقمي.
+                </p>
+              )}
             </div>
           ))}
           {!secrets && <div className="text-muted-foreground text-sm">جاري التحميل...</div>}
