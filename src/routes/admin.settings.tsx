@@ -233,6 +233,21 @@ function Settings() {
                   🔑 معرّفات أدمن البوت على تيليجرام. ضع رقمك من @userinfobot، وأضف زملاءك بفواصل: 123456789,987654321 — التحديث فوري بدون إعادة نشر.
                 </p>
               )}
+              {row.key === "CLOUDFLARE_ACCOUNT_ID" && (
+                <p className="mt-1 text-[11px] text-primary">
+                  ☁️ معرّف حساب Cloudflare — يظهر في رابط dashboard.cloudflare.com/&lt;ACCOUNT_ID&gt;. بدونه يستخدم النظام الكاش الداخلي.
+                </p>
+              )}
+              {row.key === "CLOUDFLARE_KV_NAMESPACE_ID" && (
+                <p className="mt-1 text-[11px] text-primary">
+                  🗄️ معرّف الـ KV Namespace من Workers → KV. يتفعّل الـ KV تلقائيًا بمجرد ملء الحقول الثلاثة.
+                </p>
+              )}
+              {row.key === "CLOUDFLARE_API_TOKEN" && (
+                <p className="mt-1 text-[11px] text-primary">
+                  🔐 Token بصلاحية <code>Workers KV Storage:Edit</code> فقط. يُحفظ مشفّرًا ولا يُعرض مرة أخرى.
+                </p>
+              )}
             </div>
           ))}
           {!secrets && <div className="text-muted-foreground text-sm">جاري التحميل...</div>}

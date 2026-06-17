@@ -1,15 +1,15 @@
 // ============================================================
-// Cloudflare KV adapter — `AMW_KV` binding
+// Dynamic KV adapter
 // ------------------------------------------------------------
-// • At runtime on Cloudflare Workers the binding is reachable via
-//   `globalThis.__AMW_ENV.AMW_KV` (populated by src/server.ts on each
-//   request) or, when deployed with `nodejs_compat`, via the per-isolate
-//   global `AMW_KV`.
-// • Inside Lovable's managed preview the binding does NOT exist — every
-//   call transparently falls back to an in-memory Map with TTL support
-//   so the app keeps working. After `wrangler deploy` the real KV takes
-//   over automatically; no code changes required.
+// Resolution order, per call:
+//   1) Cloudflare REST API (when CLOUDFLARE_ACCOUNT_ID + CLOUDFLARE_KV_NAMESPACE_ID
+//      + CLOUDFLARE_API_TOKEN are all configured via /admin/settings).
+//   2) Native Workers binding `AMW_KV` (when deployed with a kv_namespaces
+//      binding in wrangler.toml).
+//   3) In-memory Map fallback (Lovable preview / local dev).
 // ============================================================
+
+import { getOverrideSync } from "./telegram.server";
 
 export interface KVNamespaceLike {
   get(key: string, type?: "text" | "json"): Promise<any>;
@@ -53,18 +53,121 @@ const memoryKV: KVNamespaceLike = {
   },
 };
 
+// ----- Cloudflare REST API adapter -----
+type CfCreds = { accountId: string; namespaceId: string; token: string };
+
+function readCfCreds(): CfCreds | null {
+  // Pull from runtime overrides (set via /admin/settings) or env.
+  let accountId = "";
+  let namespaceId = "";
+  let token = "";
+  try {
+    accountId = getOverrideSync("CLOUDFLARE_ACCOUNT_ID");
+    namespaceId = getOverrideSync("CLOUDFLARE_KV_NAMESPACE_ID");
+    token = getOverrideSync("CLOUDFLARE_API_TOKEN");
+  } catch {
+    // ignore — fall through to env
+  }
+  accountId = accountId || process.env.CLOUDFLARE_ACCOUNT_ID || "";
+  namespaceId = namespaceId || process.env.CLOUDFLARE_KV_NAMESPACE_ID || "";
+  token = token || process.env.CLOUDFLARE_API_TOKEN || "";
+  if (!accountId || !namespaceId || !token) return null;
+  return { accountId: accountId.trim(), namespaceId: namespaceId.trim(), token: token.trim() };
+}
+
+function cfBase(c: CfCreds) {
+  return `https://api.cloudflare.com/client/v4/accounts/${encodeURIComponent(c.accountId)}/storage/kv/namespaces/${encodeURIComponent(c.namespaceId)}`;
+}
+
+function cfHeaders(c: CfCreds, extra: Record<string, string> = {}): Record<string, string> {
+  return { Authorization: `Bearer ${c.token}`, ...extra };
+}
+
+function makeCfKV(c: CfCreds): KVNamespaceLike {
+  return {
+    async get(key, type) {
+      const res = await fetch(`${cfBase(c)}/values/${encodeURIComponent(key)}`, {
+        method: "GET",
+        headers: cfHeaders(c),
+      });
+      if (res.status === 404) return null;
+      if (!res.ok) {
+        console.warn("cfKV.get failed", key, res.status);
+        return null;
+      }
+      const text = await res.text();
+      if (type === "json") {
+        try { return JSON.parse(text); } catch { return null; }
+      }
+      return text;
+    },
+    async put(key, value, opts) {
+      const qs = opts?.expirationTtl ? `?expiration_ttl=${opts.expirationTtl}` : "";
+      const res = await fetch(`${cfBase(c)}/values/${encodeURIComponent(key)}${qs}`, {
+        method: "PUT",
+        headers: cfHeaders(c, { "Content-Type": "text/plain" }),
+        body: value,
+      });
+      if (!res.ok) {
+        const body = await res.text().catch(() => "");
+        console.warn("cfKV.put failed", key, res.status, body);
+      }
+    },
+    async delete(key) {
+      const res = await fetch(`${cfBase(c)}/values/${encodeURIComponent(key)}`, {
+        method: "DELETE",
+        headers: cfHeaders(c),
+      });
+      if (!res.ok && res.status !== 404) {
+        console.warn("cfKV.delete failed", key, res.status);
+      }
+    },
+    async list(opts) {
+      const params = new URLSearchParams();
+      if (opts?.prefix) params.set("prefix", opts.prefix);
+      if (opts?.limit) params.set("limit", String(opts.limit));
+      if (opts?.cursor) params.set("cursor", opts.cursor);
+      const res = await fetch(`${cfBase(c)}/keys?${params.toString()}`, {
+        method: "GET",
+        headers: cfHeaders(c),
+      });
+      if (!res.ok) return { keys: [], list_complete: true };
+      const data: any = await res.json().catch(() => ({}));
+      return {
+        keys: (data?.result || []).map((k: any) => ({ name: k.name, expiration: k.expiration })),
+        list_complete: !data?.result_info?.cursor,
+        cursor: data?.result_info?.cursor,
+      };
+    },
+  };
+}
+
 // ----- binding resolver -----
 export function kv(): KVNamespaceLike {
+  // 1) Cloudflare REST API takes priority — fully dynamic, controlled from admin UI.
+  const creds = readCfCreds();
+  if (creds) return makeCfKV(creds);
+  // 2) Native binding (post-export deployments).
   const g = globalThis as any;
   const fromReq = g.__AMW_ENV?.AMW_KV;
   if (fromReq && typeof fromReq.get === "function") return fromReq as KVNamespaceLike;
   if (g.AMW_KV && typeof g.AMW_KV.get === "function") return g.AMW_KV as KVNamespaceLike;
+  // 3) In-memory fallback.
   return memoryKV;
 }
 
 export function kvHasRealBinding(): boolean {
+  if (readCfCreds()) return true;
   const g = globalThis as any;
   return !!(g.__AMW_ENV?.AMW_KV || g.AMW_KV);
+}
+
+/** Which backend is currently active — useful for diagnostics. */
+export function kvBackend(): "cloudflare-rest" | "binding" | "memory" {
+  if (readCfCreds()) return "cloudflare-rest";
+  const g = globalThis as any;
+  if (g.__AMW_ENV?.AMW_KV || g.AMW_KV) return "binding";
+  return "memory";
 }
 
 // ----- typed helpers -----
