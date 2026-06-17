@@ -11,6 +11,8 @@ import {
   studentStartPasswordReset,
 } from "@/lib/student.functions";
 import { adminLogin } from "@/lib/admin.functions";
+import { BackButton } from "@/components/BackButton";
+import { ThemeToggle } from "@/components/ThemeToggle";
 
 export const Route = createFileRoute("/login")({
   ssr: false,
