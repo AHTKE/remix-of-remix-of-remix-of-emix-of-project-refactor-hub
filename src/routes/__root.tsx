@@ -72,19 +72,26 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
   );
 }
 
+const THEME_INIT_SCRIPT = `(() => {
+  try {
+    var t = localStorage.getItem('amw_theme');
+    if (t !== 'light' && t !== 'dark') t = 'dark';
+    var r = document.documentElement;
+    r.classList.toggle('light', t === 'light');
+    r.classList.toggle('dark', t === 'dark');
+  } catch (e) {}
+})();`;
+
 export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()({
   head: () => ({
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Lovable App" },
-      { name: "description", content: "Lovable Generated Project" },
-      { name: "author", content: "Lovable" },
-      { property: "og:title", content: "Lovable App" },
-      { property: "og:description", content: "Lovable Generated Project" },
+      { title: "AMW · LMS — منصة الكورسات" },
+      { name: "description", content: "منصة AMW التعليمية المتكاملة — طلاب، دعم فني، ومدرس." },
+      { property: "og:title", content: "AMW · LMS" },
+      { property: "og:description", content: "منصة AMW التعليمية المتكاملة." },
       { property: "og:type", content: "website" },
-      { name: "twitter:card", content: "summary" },
-      { name: "twitter:site", content: "@Lovable" },
     ],
     links: [
       {
@@ -101,9 +108,10 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
 
 function RootShell({ children }: { children: ReactNode }) {
   return (
-    <html lang="en">
+    <html lang="ar" dir="rtl" className="dark">
       <head>
         <HeadContent />
+        <script dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }} />
       </head>
       <body>
         {children}
