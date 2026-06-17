@@ -612,6 +612,47 @@ export async function handleUpdate(update: any) {
     const text = String(update.message.text || "").trim();
     const from = update.message.from || {};
     const contact = update.message.contact;
+
+    // ============================================================
+    // 🎬 Forward → file_id extractor
+    // Forward (or directly send) any media to the bot and it replies
+    // with the clean file_id, ready to paste into the lessons panel.
+    // ============================================================
+    const msg = update.message;
+    const isForwarded = !!(msg.forward_from || msg.forward_from_chat || msg.forward_origin || msg.forward_sender_name || msg.forward_date);
+    let mediaInfo: { kind: string; file_id: string; name?: string; size?: number; mime?: string } | null = null;
+    if (msg.video) mediaInfo = { kind: "🎬 video", file_id: msg.video.file_id, name: msg.video.file_name, size: msg.video.file_size, mime: msg.video.mime_type };
+    else if (msg.document) mediaInfo = { kind: "📄 document", file_id: msg.document.file_id, name: msg.document.file_name, size: msg.document.file_size, mime: msg.document.mime_type };
+    else if (msg.audio) mediaInfo = { kind: "🎵 audio", file_id: msg.audio.file_id, name: msg.audio.file_name, size: msg.audio.file_size, mime: msg.audio.mime_type };
+    else if (msg.voice) mediaInfo = { kind: "🎤 voice", file_id: msg.voice.file_id, size: msg.voice.file_size, mime: msg.voice.mime_type };
+    else if (msg.animation) mediaInfo = { kind: "🎞️ animation", file_id: msg.animation.file_id, name: msg.animation.file_name, size: msg.animation.file_size, mime: msg.animation.mime_type };
+    else if (msg.photo && Array.isArray(msg.photo) && msg.photo.length) {
+      const best = msg.photo[msg.photo.length - 1];
+      mediaInfo = { kind: "🖼️ photo", file_id: best.file_id, size: best.file_size };
+    }
+    if (mediaInfo && (isForwarded || isAdmin(from.id))) {
+      const sizeMb = mediaInfo.size ? (mediaInfo.size / 1024 / 1024).toFixed(2) + " MB" : "—";
+      const lines = [
+        `✅ تم استخراج <b>file_id</b> بنجاح:`,
+        ``,
+        `<code>${mediaInfo.file_id}</code>`,
+        ``,
+        `النوع: ${mediaInfo.kind}`,
+        mediaInfo.name ? `الاسم: ${mediaInfo.name}` : null,
+        `الحجم: ${sizeMb}`,
+        mediaInfo.mime ? `MIME: <code>${mediaInfo.mime}</code>` : null,
+        ``,
+        `📋 انسخ الكود أعلاه والصقه في خانة الفيديو داخل لوحة التحكم.`,
+      ].filter(Boolean).join("\n");
+      try {
+        await tg("sendMessage", { chat_id: chatId, text: lines, parse_mode: "HTML" });
+      } catch (e) {
+        console.error("[forward-extract] sendMessage failed", e);
+      }
+      // For forwarded media we stop here — user just wanted the id.
+      if (isForwarded) return;
+    }
+
     if (contact?.phone_number && contact?.user_id && Number(contact.user_id) !== Number(from.id)) {
       console.warn(`[telegram-verify] contact rejected — contact.user_id=${contact.user_id} !== from.id=${from.id}`);
       await tg("sendMessage", {
