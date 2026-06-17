@@ -40,6 +40,7 @@ import { Route as AdminCoursesRouteImport } from './routes/admin.courses'
 import { Route as AdminBroadcastRouteImport } from './routes/admin.broadcast'
 import { Route as AdminBooksRouteImport } from './routes/admin.books'
 import { Route as AdminAnalyticsRouteImport } from './routes/admin.analytics'
+import { Route as StudentCoursesIndexRouteImport } from './routes/student.courses.index'
 import { Route as StudentQuizzesIdRouteImport } from './routes/student.quizzes.$id'
 import { Route as StudentLessonsIdRouteImport } from './routes/student.lessons.$id'
 import { Route as StudentCoursesIdRouteImport } from './routes/student.courses.$id'
@@ -202,6 +203,11 @@ const AdminAnalyticsRoute = AdminAnalyticsRouteImport.update({
   path: '/analytics',
   getParentRoute: () => AdminRoute,
 } as any)
+const StudentCoursesIndexRoute = StudentCoursesIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => StudentCoursesRoute,
+} as any)
 const StudentQuizzesIdRoute = StudentQuizzesIdRouteImport.update({
   id: '/$id',
   path: '/$id',
@@ -270,6 +276,7 @@ export interface FileRoutesByFullPath {
   '/student/courses/$id': typeof StudentCoursesIdRoute
   '/student/lessons/$id': typeof StudentLessonsIdRoute
   '/student/quizzes/$id': typeof StudentQuizzesIdRoute
+  '/student/courses/': typeof StudentCoursesIndexRoute
   '/api/public/media/$fileId': typeof ApiPublicMediaFileIdRoute
   '/api/public/telegram/webhook': typeof ApiPublicTelegramWebhookRoute
 }
@@ -294,7 +301,6 @@ export interface FileRoutesByTo {
   '/admin/wallet': typeof AdminWalletRoute
   '/student/activity': typeof StudentActivityRoute
   '/student/blocked': typeof StudentBlockedRoute
-  '/student/courses': typeof StudentCoursesRouteWithChildren
   '/student/homework': typeof StudentHomeworkRoute
   '/student/notifications': typeof StudentNotificationsRoute
   '/student/profile': typeof StudentProfileRoute
@@ -307,6 +313,7 @@ export interface FileRoutesByTo {
   '/student/courses/$id': typeof StudentCoursesIdRoute
   '/student/lessons/$id': typeof StudentLessonsIdRoute
   '/student/quizzes/$id': typeof StudentQuizzesIdRoute
+  '/student/courses': typeof StudentCoursesIndexRoute
   '/api/public/media/$fileId': typeof ApiPublicMediaFileIdRoute
   '/api/public/telegram/webhook': typeof ApiPublicTelegramWebhookRoute
 }
@@ -347,6 +354,7 @@ export interface FileRoutesById {
   '/student/courses/$id': typeof StudentCoursesIdRoute
   '/student/lessons/$id': typeof StudentLessonsIdRoute
   '/student/quizzes/$id': typeof StudentQuizzesIdRoute
+  '/student/courses/': typeof StudentCoursesIndexRoute
   '/api/public/media/$fileId': typeof ApiPublicMediaFileIdRoute
   '/api/public/telegram/webhook': typeof ApiPublicTelegramWebhookRoute
 }
@@ -388,6 +396,7 @@ export interface FileRouteTypes {
     | '/student/courses/$id'
     | '/student/lessons/$id'
     | '/student/quizzes/$id'
+    | '/student/courses/'
     | '/api/public/media/$fileId'
     | '/api/public/telegram/webhook'
   fileRoutesByTo: FileRoutesByTo
@@ -412,7 +421,6 @@ export interface FileRouteTypes {
     | '/admin/wallet'
     | '/student/activity'
     | '/student/blocked'
-    | '/student/courses'
     | '/student/homework'
     | '/student/notifications'
     | '/student/profile'
@@ -425,6 +433,7 @@ export interface FileRouteTypes {
     | '/student/courses/$id'
     | '/student/lessons/$id'
     | '/student/quizzes/$id'
+    | '/student/courses'
     | '/api/public/media/$fileId'
     | '/api/public/telegram/webhook'
   id:
@@ -464,6 +473,7 @@ export interface FileRouteTypes {
     | '/student/courses/$id'
     | '/student/lessons/$id'
     | '/student/quizzes/$id'
+    | '/student/courses/'
     | '/api/public/media/$fileId'
     | '/api/public/telegram/webhook'
   fileRoutesById: FileRoutesById
@@ -698,6 +708,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminAnalyticsRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/student/courses/': {
+      id: '/student/courses/'
+      path: '/'
+      fullPath: '/student/courses/'
+      preLoaderRoute: typeof StudentCoursesIndexRouteImport
+      parentRoute: typeof StudentCoursesRoute
+    }
     '/student/quizzes/$id': {
       id: '/student/quizzes/$id'
       path: '/$id'
@@ -785,10 +802,12 @@ const AdminRouteWithChildren = AdminRoute._addFileChildren(AdminRouteChildren)
 
 interface StudentCoursesRouteChildren {
   StudentCoursesIdRoute: typeof StudentCoursesIdRoute
+  StudentCoursesIndexRoute: typeof StudentCoursesIndexRoute
 }
 
 const StudentCoursesRouteChildren: StudentCoursesRouteChildren = {
   StudentCoursesIdRoute: StudentCoursesIdRoute,
+  StudentCoursesIndexRoute: StudentCoursesIndexRoute,
 }
 
 const StudentCoursesRouteWithChildren = StudentCoursesRoute._addFileChildren(

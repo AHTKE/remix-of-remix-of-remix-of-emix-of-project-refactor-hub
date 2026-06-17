@@ -27,7 +27,7 @@ const listPublishedCourses = createServerFn({ method: "GET" }).handler(async () 
     .sort((a, b) => (b.is_pinned ? 1 : 0) - (a.is_pinned ? 1 : 0));
 });
 
-export const Route = createFileRoute("/student/courses")({
+export const Route = createFileRoute("/student/courses/")({
   component: MyCourses,
 });
 
