@@ -1131,6 +1131,24 @@ export const saveHomeworkAdmin = createServerFn({ method: "POST" })
       created_at: existing?.created_at || new Date().toISOString(),
     };
     await upsert<Homework>("homework", hw);
+    if (!existing) {
+      const [students, lessons] = await Promise.all([
+        getCollection<Student>("students"),
+        getCollection<Lesson>("lessons"),
+      ]);
+      const lesson = lessons.find((l) => l.id === hw.lesson_id);
+      const activeStudents = students.filter((s) =>
+        (s.subscriptions || []).some((sub) => sub.course_id === hw.course_id && new Date(sub.expires_at).getTime() > Date.now()),
+      );
+      for (const s of activeStudents) {
+        await notifyStudent(s.id, `📝 <b>واجب جديد</b>\n${hw.title}${lesson ? `\nالحصة: ${lesson.title}` : ""}`);
+      }
+      const { tg } = await import("./telegram.server");
+      const { getAdminIds } = await import("./bot-features.server");
+      for (const aid of getAdminIds()) {
+        await tg("sendMessage", { chat_id: aid, text: `✅ تم إنشاء واجب من لوحة المنصة\n${hw.title}\nID: ${hw.id}` }).catch(() => {});
+      }
+    }
     return { ok: true, homework: hw };
   });
 
