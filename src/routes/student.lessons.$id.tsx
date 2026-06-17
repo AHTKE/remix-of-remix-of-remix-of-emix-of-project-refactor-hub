@@ -39,7 +39,16 @@ function LessonView() {
                     <span>{iconFor(r.kind)}</span>
                     <span>{r.file_name || r.kind}</span>
                   </div>
-                  {r.kind === "video" ? (
+                  {r.kind === "link" ? (
+                    <a
+                      href={r.url}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="inline-flex items-center gap-2 rounded-xl brand-gradient text-primary-foreground px-4 py-2 text-sm font-semibold"
+                    >
+                      🔗 فتح الشرح
+                    </a>
+                  ) : r.kind === "video" ? (
                     <video
                       src={`/api/public/media/${r.file_id}`}
                       controls
@@ -66,15 +75,29 @@ function LessonView() {
             </div>
           )}
 
-          {q.data.quiz_id && (
-            <Link
-              to="/student/quizzes/$id"
-              params={{ id: q.data.quiz_id }}
-              className="block surface-card p-5 hover:border-primary/40 transition text-center"
-            >
-              🧪 <span className="font-bold">امتحان الحصة</span> — ابدأ الآن ←
-            </Link>
-          )}
+          <section className="grid gap-4 md:grid-cols-2">
+            {q.data.quiz_id && (
+              <Link
+                to="/student/quizzes/$id"
+                params={{ id: q.data.quiz_id }}
+                className="surface-card p-5 hover:border-primary/40 transition text-center"
+              >
+                🧪 <span className="font-bold">امتحان الحصة</span>{q.data.quiz_title ? ` — ${q.data.quiz_title}` : ""} ←
+              </Link>
+            )}
+            {(q.data.homework || []).map((h) => (
+              <Link key={h.id} to="/student/homework" className="surface-card p-5 hover:border-primary/40 transition">
+                <div className="font-bold">📝 {h.title}</div>
+                <div className="text-xs text-muted-foreground mt-1">
+                  {h.last_submission?.graded_at
+                    ? `تم التصحيح: ${h.last_submission.score}/${h.max_score}`
+                    : h.last_submission
+                    ? "تم التسليم — بانتظار التصحيح"
+                    : "لم يتم التسليم بعد"}
+                </div>
+              </Link>
+            ))}
+          </section>
         </>
       )}
     </div>
@@ -82,5 +105,5 @@ function LessonView() {
 }
 
 function iconFor(kind: string) {
-  return kind === "video" ? "🎬" : kind === "photo" ? "🖼️" : kind === "audio" ? "🎵" : "📄";
+  return kind === "video" ? "🎬" : kind === "photo" ? "🖼️" : kind === "audio" ? "🎵" : kind === "link" ? "🔗" : "📄";
 }
