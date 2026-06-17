@@ -14,11 +14,19 @@ import { adminLogin } from "@/lib/admin.functions";
 
 export const Route = createFileRoute("/login")({
   ssr: false,
+  validateSearch: (s: Record<string, unknown>) => {
+    const t = s.tab;
+    const tab: Tab =
+      t === "signup" || t === "login" || t === "teacher" || t === "support"
+        ? (t as Tab)
+        : "signup";
+    return { tab };
+  },
   head: () => ({ meta: [{ title: "تسجيل دخول — AMW LMS" }] }),
   component: LoginPage,
 });
 
-type Tab = "signup" | "login" | "teacher";
+type Tab = "signup" | "login" | "teacher" | "support";
 type PendingUiStatus = "idle" | "waiting" | "verified" | "expired" | "not_found";
 
 function validateFullArabicName(value: string) {
@@ -35,7 +43,12 @@ function validateFullArabicName(value: string) {
 function LoginPage() {
   const navigate = useNavigate();
   const status = useServerFn(studentStatus);
-  const [tab, setTab] = useState<Tab>("signup");
+  const { tab: initialTab } = Route.useSearch();
+  const [tab, setTab] = useState<Tab>(initialTab);
+
+  useEffect(() => {
+    setTab(initialTab);
+  }, [initialTab]);
 
   useEffect(() => {
     status()
