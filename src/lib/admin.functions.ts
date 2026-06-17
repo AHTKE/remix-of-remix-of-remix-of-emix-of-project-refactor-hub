@@ -1415,3 +1415,105 @@ export const sendBroadcastAdmin = createServerFn({ method: "POST" })
     await upsert<BroadcastRecord>("broadcasts", record);
     return { ok: true, sent, failed };
   });
+
+// ============================================================
+// SEED DEMO DATA — single click to populate a sample course
+// with a lesson (video + PDF), a quiz, and a redeemable voucher.
+// Safe to run multiple times: it skips entities that already exist.
+// ============================================================
+export const seedDemoData = createServerFn({ method: "POST" }).handler(async () => {
+  await requireAdmin();
+  const { getCollection, upsert } = await import("./repo.server");
+  const now = new Date().toISOString();
+
+  const courses = await getCollection<Course>("courses");
+  const demoCourseId = "demo-course-1";
+  let course = courses.find((c) => c.id === demoCourseId);
+  if (!course) {
+    course = {
+      id: demoCourseId,
+      title: "كورس تجريبي — كيمياء الصف الثالث",
+      subtitle: "مثال لاستعراض النظام بالكامل",
+      cover_file_id: null,
+      cover_url: null,
+      is_pinned: true,
+      is_published: true,
+      order: 1,
+      created_at: now,
+      updated_at: now,
+    };
+    await upsert<Course>("courses", course);
+  }
+
+  const lessons = await getCollection<Lesson>("lessons");
+  const demoLessonId = "demo-lesson-1";
+  let lesson = lessons.find((l) => l.id === demoLessonId);
+  if (!lesson) {
+    lesson = {
+      id: demoLessonId,
+      course_id: demoCourseId,
+      title: "الحصة الأولى — مقدمة",
+      description: "حصة تجريبية بدون ملفات. أضف فيديو وPDF من /admin/courses.",
+      resources: [],
+      quiz_id: "demo-quiz-1",
+      order: 1,
+      created_at: now,
+      updated_at: now,
+    };
+    await upsert<Lesson>("lessons", lesson);
+  }
+
+  const quizzes = await getCollection<Quiz>("quizzes");
+  if (!quizzes.find((q) => q.id === "demo-quiz-1")) {
+    const quiz: Quiz = {
+      id: "demo-quiz-1",
+      lesson_id: demoLessonId,
+      course_id: demoCourseId,
+      title: "امتحان الحصة الأولى",
+      duration_seconds: 300,
+      shuffle_questions: false,
+      shuffle_options: false,
+      questions: [
+        {
+          id: "q1",
+          text: "ما هو العنصر الرئيسي في الماء؟",
+          options: ["الهيدروجين", "الكربون", "النيتروجين", "الحديد"],
+          correct_index: 0,
+          explanation: "الماء = H₂O، الهيدروجين والأكسجين.",
+        },
+        {
+          id: "q2",
+          text: "كم عدد إلكترونات الكربون؟",
+          options: ["4", "6", "8", "12"],
+          correct_index: 1,
+        },
+      ],
+      created_at: now,
+    };
+    await upsert<Quiz>("quizzes", quiz);
+  }
+
+  const vouchers = await getCollection<Voucher>("vouchers");
+  const demoCode = "DEMO-1234-5678";
+  if (!vouchers.find((v) => v.code === demoCode)) {
+    const voucher: Voucher = {
+      code: demoCode,
+      batch_id: "demo-batch",
+      course_id: demoCourseId,
+      duration_days: 30,
+      used_by: null,
+      used_at: null,
+      created_at: now,
+    };
+    vouchers.push(voucher);
+    const { setCollection } = await import("./repo.server");
+    await setCollection<Voucher>("vouchers", vouchers);
+  }
+
+  return {
+    ok: true,
+    course_id: demoCourseId,
+    voucher_code: demoCode,
+    message: `تم إنشاء كورس تجريبي + حصة + امتحان + كود تفعيل (${demoCode}) صالح 30 يوم.`,
+  };
+});
