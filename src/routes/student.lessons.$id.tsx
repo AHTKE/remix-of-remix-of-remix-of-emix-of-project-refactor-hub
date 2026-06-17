@@ -40,14 +40,25 @@ function LessonView() {
                     <span>{r.file_name || r.kind}</span>
                   </div>
                   {r.kind === "link" ? (
-                    <a
-                      href={r.url}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="inline-flex items-center gap-2 rounded-xl brand-gradient text-primary-foreground px-4 py-2 text-sm font-semibold"
-                    >
-                      🔗 فتح الشرح
-                    </a>
+                    <div className="space-y-3">
+                      {googleDrivePreview(r.url) ? (
+                        <iframe
+                          src={googleDrivePreview(r.url)!}
+                          title={r.file_name || "شرح Google Drive"}
+                          allow="autoplay; fullscreen"
+                          allowFullScreen
+                          className="w-full rounded-xl bg-secondary aspect-video border border-border"
+                        />
+                      ) : null}
+                      <a
+                        href={r.url}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="inline-flex items-center gap-2 rounded-xl brand-gradient text-primary-foreground px-4 py-2 text-sm font-semibold"
+                      >
+                        🔗 فتح الشرح
+                      </a>
+                    </div>
                   ) : r.kind === "video" ? (
                     <video
                       src={`/api/public/media/${r.file_id}`}
@@ -106,4 +117,10 @@ function LessonView() {
 
 function iconFor(kind: string) {
   return kind === "video" ? "🎬" : kind === "photo" ? "🖼️" : kind === "audio" ? "🎵" : kind === "link" ? "🔗" : "📄";
+}
+
+function googleDrivePreview(url?: string) {
+  if (!url) return "";
+  const match = url.match(/drive\.google\.com\/file\/d\/([^/]+)/) || url.match(/[?&]id=([^&]+)/);
+  return match ? `https://drive.google.com/file/d/${match[1]}/preview` : "";
 }
