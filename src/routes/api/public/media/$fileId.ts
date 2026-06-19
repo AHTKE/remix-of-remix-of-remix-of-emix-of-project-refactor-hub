@@ -38,6 +38,7 @@ export const Route = createFileRoute("/api/public/media/$fileId")({
 
           const url = `https://api.telegram.org/file/bot${getTelegramBotToken()}/${entry.file_path}`;
           const range = request.headers.get("range");
+          const kindHint = new URL(request.url).searchParams.get("kind");
           const upstreamHeaders: Record<string, string> = {};
           if (range) upstreamHeaders["range"] = range;
 
@@ -56,7 +57,8 @@ export const Route = createFileRoute("/api/public/media/$fileId")({
             if (!retry.ok && retry.status !== 206) return new Response(`Upstream ${retry.status}`, { status: 502 });
             const headers = new Headers();
             const retryExt = entry.file_path.split(".").pop()?.toLowerCase() || "";
-            headers.set("content-type", retry.headers.get("content-type") || CT_MAP[retryExt] || "application/octet-stream");
+            const retryType = retry.headers.get("content-type") || "";
+            headers.set("content-type", (kindHint === "video" && (!retryType || retryType === "application/octet-stream") ? "video/mp4" : retryType) || CT_MAP[retryExt] || "application/octet-stream");
             headers.set("accept-ranges", "bytes");
             headers.set("cache-control", "public, max-age=86400, immutable");
             headers.set("content-disposition", contentDispositionName(entry.file_path));
@@ -69,7 +71,6 @@ export const Route = createFileRoute("/api/public/media/$fileId")({
           }
 
           const ext = entry.file_path.split(".").pop()?.toLowerCase() || "";
-          const kindHint = new URL(request.url).searchParams.get("kind");
           const upstreamType = upstream.headers.get("content-type") || "";
           const contentType =
             (kindHint === "video" && (!upstreamType || upstreamType === "application/octet-stream")
