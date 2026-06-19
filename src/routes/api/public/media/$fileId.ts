@@ -12,12 +12,17 @@ const CT_MAP: Record<string, string> = {
   wav: "audio/wav", pdf: "application/pdf", zip: "application/zip",
 };
 
+function contentDispositionName(path: string) {
+  const name = path.split("/").pop() || "media";
+  return `inline; filename="${name.replace(/["\\]/g, "_")}"`;
+}
+
 export const Route = createFileRoute("/api/public/media/$fileId")({
   server: {
     handlers: {
       GET: async ({ params, request }) => {
         try {
-          const { tg, ensureOverridesLoaded } = await import("@/lib/telegram.server");
+          const { tg, ensureOverridesLoaded, getTelegramBotToken } = await import("@/lib/telegram.server");
 
           let entry = PATH_CACHE.get(params.fileId);
           if (!entry || Date.now() - entry.at > PATH_TTL) {
@@ -31,18 +36,9 @@ export const Route = createFileRoute("/api/public/media/$fileId")({
             PATH_CACHE.set(params.fileId, entry);
           }
 
-          const token = (process.env.TELEGRAM_BOT_TOKEN || "")
-            .trim()
-            .replace(/^bot/i, "");
-          // Pull token from runtime overrides if env is unset
-          const finalToken = token || (await (async () => {
-            const { getRuntimeSettings } = await import("@/lib/repo.server");
-            const rs = await getRuntimeSettings();
-            return String(rs.TELEGRAM_BOT_TOKEN || "").trim().replace(/^bot/i, "");
-          })());
-
-          const url = `https://api.telegram.org/file/bot${finalToken}/${entry.file_path}`;
+          const url = `https://api.telegram.org/file/bot${getTelegramBotToken()}/${entry.file_path}`;
           const range = request.headers.get("range");
+          const kindHint = new URL(request.url).searchParams.get("kind");
           const upstreamHeaders: Record<string, string> = {};
           if (range) upstreamHeaders["range"] = range;
 
@@ -50,17 +46,43 @@ export const Route = createFileRoute("/api/public/media/$fileId")({
           if (!upstream.ok && upstream.status !== 206) {
             // file_path may have expired — purge and retry once
             PATH_CACHE.delete(params.fileId);
-            return new Response(`Upstream ${upstream.status}`, { status: 502 });
+            const fresh = await tg<{ file_path?: string; file_size?: number }>(
+              "getFile",
+              { file_id: params.fileId },
+            );
+            if (!fresh.file_path) throw new Error("file_path missing");
+            entry = { file_path: fresh.file_path, file_size: fresh.file_size, at: Date.now() };
+            PATH_CACHE.set(params.fileId, entry);
+            const retry = await fetch(`https://api.telegram.org/file/bot${getTelegramBotToken()}/${entry.file_path}`, { headers: upstreamHeaders });
+            if (!retry.ok && retry.status !== 206) return new Response(`Upstream ${retry.status}`, { status: 502 });
+            const headers = new Headers();
+            const retryExt = entry.file_path.split(".").pop()?.toLowerCase() || "";
+            const retryType = retry.headers.get("content-type") || "";
+            headers.set("content-type", (kindHint === "video" && (!retryType || retryType === "application/octet-stream") ? "video/mp4" : retryType) || CT_MAP[retryExt] || "application/octet-stream");
+            headers.set("accept-ranges", "bytes");
+            headers.set("cache-control", "public, max-age=86400, immutable");
+            headers.set("content-disposition", contentDispositionName(entry.file_path));
+            headers.set("x-content-type-options", "nosniff");
+            const retryCl = retry.headers.get("content-length");
+            if (retryCl) headers.set("content-length", retryCl);
+            const retryCr = retry.headers.get("content-range");
+            if (retryCr) headers.set("content-range", retryCr);
+            return new Response(retry.body, { status: retry.status, headers });
           }
 
           const ext = entry.file_path.split(".").pop()?.toLowerCase() || "";
+          const upstreamType = upstream.headers.get("content-type") || "";
           const contentType =
-            upstream.headers.get("content-type") || CT_MAP[ext] || "application/octet-stream";
+            (kindHint === "video" && (!upstreamType || upstreamType === "application/octet-stream")
+              ? "video/mp4"
+              : upstreamType) || CT_MAP[ext] || "application/octet-stream";
 
           const headers = new Headers();
           headers.set("content-type", contentType);
           headers.set("accept-ranges", "bytes");
           headers.set("cache-control", "public, max-age=86400, immutable");
+          headers.set("content-disposition", contentDispositionName(entry.file_path));
+          headers.set("x-content-type-options", "nosniff");
           const cl = upstream.headers.get("content-length");
           if (cl) headers.set("content-length", cl);
           const cr = upstream.headers.get("content-range");
