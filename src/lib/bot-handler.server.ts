@@ -620,9 +620,12 @@ export async function handleUpdate(update: any) {
     // ============================================================
     const msg = update.message;
     const isForwarded = !!(msg.forward_from || msg.forward_from_chat || msg.forward_origin || msg.forward_sender_name || msg.forward_date);
-    let mediaInfo: { kind: string; file_id: string; name?: string; size?: number; mime?: string } | null = null;
-    if (msg.video) mediaInfo = { kind: "🎬 video", file_id: msg.video.file_id, name: msg.video.file_name, size: msg.video.file_size, mime: msg.video.mime_type };
-    else if (msg.document) mediaInfo = { kind: "📄 document", file_id: msg.document.file_id, name: msg.document.file_name, size: msg.document.file_size, mime: msg.document.mime_type };
+    let mediaInfo: { kind: string; file_id: string; name?: string; size?: number; mime?: string; isVideo?: boolean } | null = null;
+    if (msg.video) mediaInfo = { kind: "🎬 video", file_id: msg.video.file_id, name: msg.video.file_name, size: msg.video.file_size, mime: msg.video.mime_type, isVideo: true };
+    else if (msg.document) {
+      const isVideoDocument = String(msg.document.mime_type || "").startsWith("video/") || /\.(mp4|mov|webm|mkv)$/i.test(String(msg.document.file_name || ""));
+      mediaInfo = { kind: isVideoDocument ? "🎬 video" : "📄 document", file_id: msg.document.file_id, name: msg.document.file_name, size: msg.document.file_size, mime: msg.document.mime_type, isVideo: isVideoDocument };
+    }
     else if (msg.audio) mediaInfo = { kind: "🎵 audio", file_id: msg.audio.file_id, name: msg.audio.file_name, size: msg.audio.file_size, mime: msg.audio.mime_type };
     else if (msg.voice) mediaInfo = { kind: "🎤 voice", file_id: msg.voice.file_id, size: msg.voice.file_size, mime: msg.voice.mime_type };
     else if (msg.animation) mediaInfo = { kind: "🎞️ animation", file_id: msg.animation.file_id, name: msg.animation.file_name, size: msg.animation.file_size, mime: msg.animation.mime_type };
@@ -632,17 +635,21 @@ export async function handleUpdate(update: any) {
     }
     if (mediaInfo && (isForwarded || isAdmin(from.id))) {
       const sizeMb = mediaInfo.size ? (mediaInfo.size / 1024 / 1024).toFixed(2) + " MB" : "—";
+      const videoProxy = mediaInfo.isVideo ? `/api/public/media/${encodeURIComponent(mediaInfo.file_id)}?kind=video` : "";
       const lines = [
         `✅ تم استخراج <b>file_id</b> بنجاح:`,
         ``,
         `<code>${mediaInfo.file_id}</code>`,
+        videoProxy ? `` : null,
+        videoProxy ? `🔗 رابط تشغيل الفيديو داخل الموقع:` : null,
+        videoProxy ? `<code>${videoProxy}</code>` : null,
         ``,
         `النوع: ${mediaInfo.kind}`,
         mediaInfo.name ? `الاسم: ${mediaInfo.name}` : null,
         `الحجم: ${sizeMb}`,
         mediaInfo.mime ? `MIME: <code>${mediaInfo.mime}</code>` : null,
         ``,
-        `📋 انسخ الكود أعلاه والصقه في خانة الفيديو داخل لوحة التحكم.`,
+        mediaInfo.isVideo ? `📋 انسخ الـ file_id أو الرابط والصقه في خانة فيديوهات الشرح داخل لوحة التحكم.` : `📋 انسخ الـ file_id والصقه في خانة الملف المناسبة داخل لوحة التحكم.`,
       ].filter(Boolean).join("\n");
       try {
         await tg("sendMessage", { chat_id: chatId, text: lines, parse_mode: "HTML" });

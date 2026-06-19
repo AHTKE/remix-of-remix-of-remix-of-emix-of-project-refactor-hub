@@ -69,8 +69,12 @@ export const Route = createFileRoute("/api/public/media/$fileId")({
           }
 
           const ext = entry.file_path.split(".").pop()?.toLowerCase() || "";
+          const kindHint = new URL(request.url).searchParams.get("kind");
+          const upstreamType = upstream.headers.get("content-type") || "";
           const contentType =
-            upstream.headers.get("content-type") || CT_MAP[ext] || "application/octet-stream";
+            (kindHint === "video" && (!upstreamType || upstreamType === "application/octet-stream")
+              ? "video/mp4"
+              : upstreamType) || CT_MAP[ext] || "application/octet-stream";
 
           const headers = new Headers();
           headers.set("content-type", contentType);
