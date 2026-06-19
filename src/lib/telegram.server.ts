@@ -49,6 +49,10 @@ function token() {
   return t;
 }
 
+export function getTelegramBotToken() {
+  return token();
+}
+
 function normalizeDigits(value: string) {
   const arabicIndic = "٠١٢٣٤٥٦٧٨٩";
   const easternArabic = "۰۱۲۳۴۵۶۷۸۹";
