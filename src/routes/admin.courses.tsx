@@ -182,18 +182,20 @@ function LessonsPanel({ courseId }: { courseId: string }) {
     const draft = videoDrafts[lesson.id] || { value: "", title: "" };
     const raw = draft.value.trim();
     if (!raw) return alert("ضع Telegram file_id أو رابط فيديو");
-    const isUrl = /^https?:\/\//i.test(raw);
+    const telegramMediaMatch = raw.match(/\/api\/public\/media\/([^?#/]+)/i);
+    const normalized = telegramMediaMatch ? decodeURIComponent(telegramMediaMatch[1]) : raw;
+    const isUrl = /^https?:\/\//i.test(normalized);
     const resource: any = {
       id: "r_" + Date.now().toString(36),
       kind: "video",
       file_name: draft.title.trim() || "فيديو الحصة",
     };
     if (isUrl) {
-      resource.url = raw;
+      resource.url = normalized;
       resource.provider = "external";
     } else {
       // Telegram file_id — served via /api/public/media proxy
-      resource.file_id = raw;
+      resource.file_id = normalized;
     }
     await save({ data: { ...lesson, resources: [...lesson.resources, resource] } as any });
     setVideoDrafts({ ...videoDrafts, [lesson.id]: { value: "", title: "" } });
@@ -324,6 +326,7 @@ function LessonsPanel({ courseId }: { courseId: string }) {
                 + ملف
                 <input
                   type="file"
+                  accept="image/*,audio/*,.pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.zip,.rar"
                   className="hidden"
                   onChange={(e) => addResource(l.id, e)}
                   disabled={uploading}
@@ -347,11 +350,13 @@ function LessonsPanel({ courseId }: { courseId: string }) {
                 + رابط
               </button>
             </div>
-            <div className="grid grid-cols-1 sm:grid-cols-[1fr_1fr_auto] gap-1.5">
+            <div className="rounded-lg border border-primary/25 bg-primary/5 p-2 space-y-2">
+              <div className="text-[11px] font-semibold text-primary">🎬 فيديوهات الشرح فقط</div>
+              <div className="grid grid-cols-1 sm:grid-cols-[1fr_1fr_auto] gap-1.5">
               <input
                 value={videoDrafts[l.id]?.value || ""}
                 onChange={(e) => setVideoDrafts({ ...videoDrafts, [l.id]: { ...(videoDrafts[l.id] || { title: "" }), value: e.target.value } })}
-                placeholder="🎬 Telegram file_id أو رابط فيديو (للحلقات الكبيرة)"
+                placeholder="الصق Telegram file_id أو رابط /api/public/media من البوت"
                 className="rounded-md bg-input border border-border px-2 py-1 text-xs font-mono"
                 dir="ltr"
               />
@@ -364,6 +369,7 @@ function LessonsPanel({ courseId }: { courseId: string }) {
               <button onClick={() => addVideoResource(l)} className="rounded-md bg-primary/15 text-primary px-3 py-1 text-xs font-semibold">
                 + فيديو
               </button>
+              </div>
             </div>
           </div>
         ))
