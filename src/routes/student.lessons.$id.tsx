@@ -68,7 +68,7 @@ function LessonView() {
                           title={r.file_name || "فيديو الحصة"}
                           allow="autoplay; fullscreen"
                           allowFullScreen
-                          className="w-full rounded-xl bg-black aspect-video border border-border"
+                          className="w-full rounded-xl bg-background aspect-video border border-border"
                           onContextMenu={(e) => e.preventDefault()}
                         />
                       ) : (
@@ -211,7 +211,7 @@ function SecureVideo({ src, title }: { src: string; title: string }) {
   }
 
   return (
-    <div className="relative overflow-hidden rounded-xl border border-border bg-black aspect-video select-none" onContextMenu={(e) => e.preventDefault()}>
+    <div className="relative overflow-hidden rounded-xl border border-border bg-background aspect-video select-none" onContextMenu={(e) => e.preventDefault()}>
       <video
         ref={videoRef}
         src={src}
@@ -223,13 +223,13 @@ function SecureVideo({ src, title }: { src: string; title: string }) {
         disablePictureInPicture
         onClick={togglePlay}
         onContextMenu={(e) => e.preventDefault()}
-        className="h-full w-full bg-black object-contain"
+        className="h-full w-full bg-background object-contain"
       />
       <button
         type="button"
         onClick={togglePlay}
         aria-label={playing ? "إيقاف مؤقت" : "تشغيل"}
-        className="absolute inset-0 grid place-items-center bg-black/10 transition hover:bg-black/20"
+        className="absolute inset-0 grid place-items-center bg-background/10 transition hover:bg-background/20"
       >
         {!playing && <span className="grid h-16 w-16 place-items-center rounded-full bg-primary/90 text-2xl text-primary-foreground shadow-lg">▶</span>}
       </button>
@@ -238,7 +238,7 @@ function SecureVideo({ src, title }: { src: string; title: string }) {
           تعذّر تشغيل الفيديو. تأكد من لصق Telegram file_id كامل من البوت.
         </div>
       )}
-      <div className="absolute inset-x-0 bottom-0 space-y-2 bg-gradient-to-t from-black/90 via-black/60 to-transparent p-3">
+      <div className="absolute inset-x-0 bottom-0 space-y-2 bg-gradient-to-t from-background/90 via-background/60 to-transparent p-3">
         <input
           type="range"
           min={0}
