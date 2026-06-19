@@ -141,3 +141,132 @@ function googleDrivePreview(url?: string) {
   const match = url.match(/drive\.google\.com\/file\/d\/([^/]+)/) || url.match(/[?&]id=([^&]+)/);
   return match ? `https://drive.google.com/file/d/${match[1]}/preview` : "";
 }
+
+function SecureVideo({ src, title }: { src: string; title: string }) {
+  const videoRef = useRef<HTMLVideoElement | null>(null);
+  const [playing, setPlaying] = useState(false);
+  const [muted, setMuted] = useState(false);
+  const [current, setCurrent] = useState(0);
+  const [duration, setDuration] = useState(0);
+  const [failed, setFailed] = useState(false);
+
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video) return;
+    const syncTime = () => setCurrent(video.currentTime || 0);
+    const syncDuration = () => setDuration(Number.isFinite(video.duration) ? video.duration : 0);
+    const syncPlaying = () => setPlaying(!video.paused && !video.ended);
+    const syncPaused = () => setPlaying(false);
+    const onError = () => setFailed(true);
+    setFailed(false);
+    video.addEventListener("timeupdate", syncTime);
+    video.addEventListener("loadedmetadata", syncDuration);
+    video.addEventListener("durationchange", syncDuration);
+    video.addEventListener("play", syncPlaying);
+    video.addEventListener("pause", syncPaused);
+    video.addEventListener("ended", syncPaused);
+    video.addEventListener("error", onError);
+    return () => {
+      video.removeEventListener("timeupdate", syncTime);
+      video.removeEventListener("loadedmetadata", syncDuration);
+      video.removeEventListener("durationchange", syncDuration);
+      video.removeEventListener("play", syncPlaying);
+      video.removeEventListener("pause", syncPaused);
+      video.removeEventListener("ended", syncPaused);
+      video.removeEventListener("error", onError);
+    };
+  }, [src]);
+
+  async function togglePlay() {
+    const video = videoRef.current;
+    if (!video) return;
+    try {
+      if (video.paused) await video.play();
+      else video.pause();
+    } catch {
+      setFailed(true);
+    }
+  }
+
+  function seek(value: string) {
+    const video = videoRef.current;
+    if (!video) return;
+    const next = Number(value);
+    video.currentTime = next;
+    setCurrent(next);
+  }
+
+  function toggleMute() {
+    const video = videoRef.current;
+    if (!video) return;
+    video.muted = !video.muted;
+    setMuted(video.muted);
+  }
+
+  async function fullscreen() {
+    const box = videoRef.current?.parentElement;
+    if (!box) return;
+    const target = box as HTMLElement & { webkitRequestFullscreen?: () => Promise<void> | void };
+    await (target.requestFullscreen?.() || target.webkitRequestFullscreen?.());
+  }
+
+  return (
+    <div className="relative overflow-hidden rounded-xl border border-border bg-black aspect-video select-none" onContextMenu={(e) => e.preventDefault()}>
+      <video
+        ref={videoRef}
+        src={src}
+        aria-label={title}
+        preload="metadata"
+        playsInline
+        controls={false}
+        controlsList="nodownload noplaybackrate noremoteplayback"
+        disablePictureInPicture
+        onClick={togglePlay}
+        onContextMenu={(e) => e.preventDefault()}
+        className="h-full w-full bg-black object-contain"
+      />
+      <button
+        type="button"
+        onClick={togglePlay}
+        aria-label={playing ? "إيقاف مؤقت" : "تشغيل"}
+        className="absolute inset-0 grid place-items-center bg-black/10 transition hover:bg-black/20"
+      >
+        {!playing && <span className="grid h-16 w-16 place-items-center rounded-full bg-primary/90 text-2xl text-primary-foreground shadow-lg">▶</span>}
+      </button>
+      {failed && (
+        <div className="absolute inset-x-4 top-4 rounded-lg border border-destructive/40 bg-destructive/90 p-3 text-center text-sm text-destructive-foreground">
+          تعذّر تشغيل الفيديو. تأكد من لصق Telegram file_id كامل من البوت.
+        </div>
+      )}
+      <div className="absolute inset-x-0 bottom-0 space-y-2 bg-gradient-to-t from-black/90 via-black/60 to-transparent p-3">
+        <input
+          type="range"
+          min={0}
+          max={duration || 0}
+          value={Math.min(current, duration || current)}
+          onChange={(e) => seek(e.target.value)}
+          aria-label="موضع الفيديو"
+          className="w-full accent-primary"
+        />
+        <div className="flex items-center gap-3 text-primary-foreground">
+          <button type="button" onClick={togglePlay} aria-label={playing ? "إيقاف مؤقت" : "تشغيل"} className="text-xl leading-none">
+            {playing ? "⏸" : "▶"}
+          </button>
+          <span className="min-w-20 text-xs tabular-nums">{formatTime(current)} / {formatTime(duration)}</span>
+          <button type="button" onClick={toggleMute} aria-label={muted ? "تشغيل الصوت" : "كتم الصوت"} className="ms-auto text-lg leading-none">
+            {muted ? "🔇" : "🔊"}
+          </button>
+          <button type="button" onClick={fullscreen} aria-label="ملء الشاشة" className="text-lg leading-none">⛶</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function formatTime(value: number) {
+  if (!Number.isFinite(value) || value <= 0) return "0:00";
+  const total = Math.floor(value);
+  const minutes = Math.floor(total / 60);
+  const seconds = String(total % 60).padStart(2, "0");
+  return `${minutes}:${seconds}`;
+}
