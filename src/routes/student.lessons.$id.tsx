@@ -1,5 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
+import { useEffect, useRef, useState } from "react";
 import { getLesson } from "@/lib/student.functions";
 
 export const Route = createFileRoute("/student/lessons/$id")({
@@ -71,26 +72,16 @@ function LessonView() {
                           onContextMenu={(e) => e.preventDefault()}
                         />
                       ) : (
-                        <video
-                          src={r.url}
-                          controls
-                          controlsList="nodownload noplaybackrate noremoteplayback"
-                          disablePictureInPicture
-                          onContextMenu={(e) => e.preventDefault()}
-                          preload="metadata"
-                          className="w-full rounded-xl bg-black aspect-video"
-                        />
+                        <SecureVideo src={r.url} title={r.file_name || "فيديو الحصة"} />
                       )
                     ) : (
-                      <video
-                        src={`/api/public/media/${r.file_id}`}
-                        controls
-                        controlsList="nodownload noplaybackrate noremoteplayback"
-                        disablePictureInPicture
-                        onContextMenu={(e) => e.preventDefault()}
-                        preload="metadata"
-                        className="w-full rounded-xl bg-black aspect-video"
-                      />
+                      r.file_id ? (
+                        <SecureVideo src={`/api/public/media/${encodeURIComponent(r.file_id)}`} title={r.file_name || "فيديو الحصة"} />
+                      ) : (
+                        <div className="rounded-xl border border-destructive/40 bg-destructive/10 p-4 text-sm text-destructive">
+                          ملف الفيديو غير مضبوط. أعد لصق Telegram file_id من لوحة التحكم.
+                        </div>
+                      )
                     )
                   ) : r.kind === "photo" ? (
                     <img src={`/api/public/media/${r.file_id}`} alt={r.file_name || ""} className="w-full rounded-xl" />
