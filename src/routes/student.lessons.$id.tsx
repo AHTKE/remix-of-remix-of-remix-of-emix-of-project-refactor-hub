@@ -76,7 +76,7 @@ function LessonView() {
                       )
                     ) : (
                       r.file_id ? (
-                        <SecureVideo src={`/api/public/media/${encodeURIComponent(r.file_id)}`} title={r.file_name || "فيديو الحصة"} />
+                        <SecureVideo src={`/api/public/media/${encodeURIComponent(r.file_id)}?kind=video`} title={r.file_name || "فيديو الحصة"} />
                       ) : (
                         <div className="rounded-xl border border-destructive/40 bg-destructive/10 p-4 text-sm text-destructive">
                           ملف الفيديو غير مضبوط. أعد لصق Telegram file_id من لوحة التحكم.
